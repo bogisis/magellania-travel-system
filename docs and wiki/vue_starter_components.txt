@@ -1,0 +1,1048 @@
+<!-- ===== ОСНОВНОЙ КОМПОНЕНТ ПРИЛОЖЕНИЯ ===== -->
+<!-- src/App.vue -->
+<template>
+  <div id="app" class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <AppHeader />
+    
+    <!-- Navigation -->
+    <AppNavigation />
+    
+    <!-- Main Content -->
+    <main class="flex-1">
+      <div class="container mx-auto px-6 py-8">
+        <router-view />
+      </div>
+    </main>
+    
+    <!-- Toast Notifications -->
+    <ToastContainer />
+  </div>
+</template>
+
+<script setup>
+import { onMounted } from 'vue'
+import { useEstimateStore } from '@/stores/estimateStore'
+import AppHeader from '@/components/layout/AppHeader.vue'
+import AppNavigation from '@/components/layout/AppNavigation.vue'
+import ToastContainer from '@/components/common/ToastContainer.vue'
+
+const estimateStore = useEstimateStore()
+
+onMounted(async () => {
+  // Загружаем существующие сметы при запуске приложения
+  await estimateStore.loadAllEstimates()
+})
+</script>
+
+<!-- ===== ЗАГОЛОВОК ПРИЛОЖЕНИЯ ===== -->
+<!-- src/components/layout/AppHeader.vue -->
+<template>
+  <header class="bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg">
+    <div class="container mx-auto px-6 py-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+          <div class="text-3xl">🗺️</div>
+          <div>
+            <h1 class="text-2xl font-bold company-logo">
+              {{ companyName }}
+            </h1>
+            <p class="opacity-90 text-sm">{{ tagline }}</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center space-x-4">
+          <!-- Уведомления -->
+          <button 
+            class="relative p-2 hover:bg-white/20 rounded-lg transition-colors"
+            @click="toggleNotifications"
+          >
+            <Bell :size="20" />
+            <span 
+              v-if="unreadCount > 0"
+              class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
+            >
+              {{ unreadCount }}
+            </span>
+          </button>
+          
+          <!-- Пользователь -->
+          <div class="flex items-center space-x-3">
+            <span class="text-sm opacity-90">
+              Добро пожаловать, {{ userName }}
+            </span>
+            <div 
+              class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center cursor-pointer hover:bg-white/30 transition-colors"
+              @click="toggleUserMenu"
+            >
+              <User :size="20" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+</template>
+
+<script setup>
+import { ref, computed } from 'vue'
+import { Bell, User } from 'lucide-vue-next'
+
+// Данные компании
+const companyName = ref('Magellania Travel System')
+const tagline = ref('Профессиональное планирование туристических программ')
+
+// Данные пользователя
+const userName = ref('Анна Петрова')
+const unreadCount = computed(() => 3) // Заглушка для уведомлений
+
+// Методы
+const toggleNotifications = () => {
+  console.log('Toggle notifications')
+}
+
+const toggleUserMenu = () => {
+  console.log('Toggle user menu')  
+}
+</script>
+
+<!-- ===== НАВИГАЦИЯ ===== -->
+<!-- src/components/layout/AppNavigation.vue -->
+<template>
+  <nav class="bg-white border-b-2 border-gray-200 sticky top-0 z-10">
+    <div class="container mx-auto px-6">
+      <div class="flex space-x-0 overflow-x-auto">
+        <router-link
+          v-for="tab in navigationTabs"
+          :key="tab.name"
+          :to="tab.path"
+          class="nav-tab"
+          :class="{ 'active': $route.path === tab.path }"
+        >
+          <span class="text-lg mr-2">{{ tab.icon }}</span>
+          {{ tab.label }}
+        </router-link>
+      </div>
+    </div>
+  </nav>
+</template>
+
+<script setup>
+import { ref } from 'vue'
+
+const navigationTabs = ref([
+  { name: 'dashboard', path: '/', icon: '🏠', label: 'Главная' },
+  { name: 'estimates', path: '/estimates', icon: '📊', label: 'Сметы' },
+  { name: 'editor', path: '/editor', icon: '✏️', label: 'Редактор' },
+  { name: 'optional', path: '/optional', icon: '⭐', label: 'Доп. услуги' },
+  { name: 'preview', path: '/preview', icon: '👁️', label: 'Предпросмотр' },
+])
+</script>
+
+<style scoped>
+.nav-tab {
+  @apply px-6 py-4 border-b-3 border-transparent font-medium transition-all text-gray-600 hover:bg-gray-50 flex items-center whitespace-nowrap;
+}
+
+.nav-tab.active {
+  @apply border-blue-500 text-blue-600 bg-blue-50;
+}
+</style>
+
+<!-- ===== ФОРМА ОСНОВНОЙ ИНФОРМАЦИИ О ТУРЕ ===== -->
+<!-- src/components/estimate/TourInfoForm.vue -->
+<template>
+  <div class="card">
+    <div class="card-header">
+      <h2 class="text-xl font-semibold text-gray-900">
+        📋 Основная информация о туре
+      </h2>
+    </div>
+    
+    <div class="card-body">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Название тура -->
+        <div class="form-group">
+          <label class="form-label">Название тура</label>
+          <input 
+            v-model="tourInfo.tourName"
+            type="text"
+            class="form-control"
+            placeholder="Введите название тура"
+            @input="handleTourInfoChange"
+          />
+        </div>
+        
+        <!-- Страна -->
+        <div class="form-group">
+          <label class="form-label">Страна</label>
+          <select 
+            v-model="tourInfo.country"
+            class="form-control"
+            @change="handleCountryChange"
+          >
+            <option value="">Выберите страну</option>
+            <option 
+              v-for="country in countries"
+              :key="country.code"
+              :value="country.code"
+            >
+              {{ country.flag }} {{ country.name }}
+            </option>
+          </select>
+        </div>
+        
+        <!-- Регион -->
+        <div class="form-group">
+          <label class="form-label">Регион</label>
+          <select 
+            v-model="tourInfo.region"
+            class="form-control"
+            :disabled="!tourInfo.country"
+            @change="handleTourInfoChange"
+          >
+            <option value="">Выберите регион</option>
+            <option 
+              v-for="region in availableRegions"
+              :key="region"
+              :value="region"
+            >
+              {{ region }}
+            </option>
+          </select>
+        </div>
+        
+        <!-- Дата начала -->
+        <div class="form-group">
+          <label class="form-label">Дата начала</label>
+          <input 
+            v-model="tourInfo.startDate"
+            type="date"
+            class="form-control"
+            @change="handleDateChange"
+          />
+        </div>
+        
+        <!-- Количество дней -->
+        <div class="form-group">
+          <label class="form-label">Количество дней</label>
+          <input 
+            v-model.number="tourInfo.duration"
+            type="number"
+            min="1"
+            max="365"
+            class="form-control"
+            @input="handleDurationChange"
+          />
+        </div>
+        
+        <!-- Дата окончания -->
+        <div class="form-group">
+          <label class="form-label">Дата окончания</label>
+          <input 
+            v-model="tourInfo.endDate"
+            type="date"
+            class="form-control"
+            @change="handleEndDateChange"
+          />
+        </div>
+        
+        <!-- Количество туристов -->
+        <div class="form-group">
+          <label class="form-label">Количество туристов</label>
+          <input 
+            v-model.number="tourInfo.touristCount"
+            type="number"
+            min="1"
+            max="50"
+            class="form-control"
+            @input="handleTourInfoChange"
+          />
+        </div>
+        
+        <!-- Количество гидов -->
+        <div class="form-group">
+          <label class="form-label">Количество гидов</label>
+          <input 
+            v-model.number="tourInfo.guideCount"
+            type="number"
+            min="0"
+            max="10"
+            class="form-control"
+            @input="handleTourInfoChange"
+          />
+        </div>
+      </div>
+      
+      <!-- Дополнительные настройки -->
+      <div class="mt-8 p-4 bg-gray-50 rounded-lg">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">
+          👥 Размещение туристов
+        </h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="form-group">
+            <label class="form-label">Двухместное размещение</label>
+            <div class="flex space-x-4">
+              <input 
+                v-model.number="accommodation.double.count"
+                type="number"
+                min="0"
+                class="form-control flex-1"
+                placeholder="Количество"
+                @input="handleTourInfoChange"
+              />
+              <input 
+                v-model.number="accommodation.double.price"
+                type="number"
+                min="0"
+                step="0.01"
+                class="form-control flex-1"
+                placeholder="Цена за чел."
+                @input="handleTourInfoChange"
+              />
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Одноместное размещение</label>
+            <div class="flex space-x-4">
+              <input 
+                v-model.number="accommodation.single.count"
+                type="number"
+                min="0"
+                class="form-control flex-1"
+                placeholder="Количество"
+                @input="handleTourInfoChange"
+              />
+              <input 
+                v-model.number="accommodation.single.price"
+                type="number"
+                min="0"
+                step="0.01"
+                class="form-control flex-1"
+                placeholder="Цена за чел."
+                @input="handleTourInfoChange"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, watch } from 'vue'
+import { useEstimateStore } from '@/stores/estimateStore'
+import { addDays, parseISO, formatISO } from 'date-fns'
+
+const estimateStore = useEstimateStore()
+
+// Данные формы
+const tourInfo = ref({
+  tourName: 'Новый тур',
+  country: 'argentina',
+  region: '',
+  startDate: '',
+  duration: 7,
+  endDate: '',
+  touristCount: 4,
+  guideCount: 1
+})
+
+const accommodation = ref({
+  double: { count: 2, price: 100 },
+  single: { count: 0, price: 150 }
+})
+
+// Справочники
+const countries = ref([
+  { code: 'argentina', name: 'Аргентина', flag: '🇦🇷' },
+  { code: 'chile', name: 'Чили', flag: '🇨🇱' },
+  { code: 'peru', name: 'Перу', flag: '🇵🇪' },
+  { code: 'bolivia', name: 'Боливия', flag: '🇧🇴' },
+  { code: 'ecuador', name: 'Эквадор', flag: '🇪🇨' },
+])
+
+const regionsByCountry = ref({
+  argentina: ['Буэнос-Айрес', 'Патагония', 'Мендоса', 'Сальта', 'Ушуая'],
+  chile: ['Сантьяго', 'Атакама', 'Патагония', 'Остров Пасхи'],
+  peru: ['Лима', 'Куско', 'Арекипа', 'Амазония'],
+  bolivia: ['Ла-Пас', 'Солончак Уюни', 'Тирауа'],
+  ecuador: ['Кито', 'Галапагосы', 'Баньос']
+})
+
+// Вычисляемые свойства
+const availableRegions = computed(() => {
+  return tourInfo.value.country ? regionsByCountry.value[tourInfo.value.country] || [] : []
+})
+
+// Методы
+const handleCountryChange = () => {
+  tourInfo.value.region = ''
+  handleTourInfoChange()
+}
+
+const handleDateChange = () => {
+  if (tourInfo.value.startDate && tourInfo.value.duration) {
+    const startDate = parseISO(tourInfo.value.startDate)
+    const endDate = addDays(startDate, tourInfo.value.duration - 1)
+    tourInfo.value.endDate = formatISO(endDate, { representation: 'date' })
+  }
+  handleTourInfoChange()
+}
+
+const handleDurationChange = () => {
+  if (tourInfo.value.startDate && tourInfo.value.duration > 0) {
+    const startDate = parseISO(tourInfo.value.startDate)
+    const endDate = addDays(startDate, tourInfo.value.duration - 1)
+    tourInfo.value.endDate = formatISO(endDate, { representation: 'date' })
+  }
+  handleTourInfoChange()
+}
+
+const handleEndDateChange = () => {
+  if (tourInfo.value.startDate && tourInfo.value.endDate) {
+    const startDate = parseISO(tourInfo.value.startDate)
+    const endDate = parseISO(tourInfo.value.endDate)
+    const diffTime = Math.abs(endDate - startDate)
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1
+    tourInfo.value.duration = diffDays
+  }
+  handleTourInfoChange()
+}
+
+const handleTourInfoChange = () => {
+  // Обновляем store с новыми данными
+  estimateStore.updateTourInfo({
+    ...tourInfo.value,
+    accommodation: accommodation.value
+  })
+}
+
+// Инициализация данных из store
+watch(() => estimateStore.currentEstimate, (newEstimate) => {
+  if (newEstimate && newEstimate.tourInfo) {
+    Object.assign(tourInfo.value, newEstimate.tourInfo)
+    if (newEstimate.tourInfo.accommodation) {
+      Object.assign(accommodation.value, newEstimate.tourInfo.accommodation)
+    }
+  }
+}, { immediate: true })
+</script>
+
+<!-- ===== КОМПОНЕНТ ДНЯ ТУРА ===== -->
+<!-- src/components/estimate/DaySection.vue -->
+<template>
+  <div class="day-section" :class="{ 'dragging': isDragging }">
+    <!-- Заголовок дня -->
+    <div class="day-header">
+      <div class="flex items-center space-x-4">
+        <button 
+          class="drag-handle cursor-grab active:cursor-grabbing"
+          @mousedown="handleDragStart"
+        >
+          <GripVertical :size="20" />
+        </button>
+        
+        <div>
+          <h3 class="text-lg font-semibold">
+            📅 День {{ day.dayNumber }} • {{ formatDate(day.date) }}
+          </h3>
+          <input 
+            v-model="day.title"
+            class="bg-transparent border-none text-white placeholder-white/70 text-base font-normal outline-none w-full"
+            placeholder="Название дня..."
+            @input="handleDayUpdate"
+          />
+        </div>
+      </div>
+      
+      <div class="flex items-center space-x-4">
+        <span class="text-xl font-bold">
+          💰 ${{ dayTotal }}
+        </span>
+        <button 
+          class="hover:bg-white/20 p-2 rounded-lg transition-colors"
+          @click="toggleExpanded"
+        >
+          <ChevronDown 
+            :size="20" 
+            :class="{ 'rotate-180': !isExpanded }"
+            class="transition-transform"
+          />
+        </button>
+        <button 
+          class="hover:bg-white/20 p-2 rounded-lg transition-colors text-red-300 hover:text-red-100"
+          @click="handleDeleteDay"
+        >
+          <Trash2 :size="20" />
+        </button>
+      </div>
+    </div>
+    
+    <!-- Контент дня -->
+    <div v-show="isExpanded" class="divide-y divide-gray-100">
+      <!-- Активности -->
+      <div class="space-y-0">
+        <ActivityRow
+          v-for="(activity, index) in day.activities"
+          :key="activity.id"
+          :activity="activity"
+          :day-id="day.id"
+          :activity-index="index"
+          @update="handleActivityUpdate"
+          @delete="handleActivityDelete"
+        />
+      </div>
+      
+      <!-- Отели -->
+      <div v-if="day.hotels && day.hotels.length > 0" class="p-4 bg-blue-50">
+        <h4 class="text-sm font-medium text-gray-700 mb-3 flex items-center">
+          <Hotel :size="16" class="mr-2" />
+          🏨 Размещение
+        </h4>
+        <div class="space-y-2">
+          <div 
+            v-for="hotel in day.hotels"
+            :key="hotel.id"
+            class="flex items-center justify-between p-2 bg-white rounded border"
+          >
+            <div class="flex-1">
+              <input 
+                v-model="hotel.name"
+                class="border-none bg-transparent w-full font-medium"
+                placeholder="Название отеля..."
+                @input="handleDayUpdate"
+              />
+              <div class="flex items-center space-x-4 text-sm text-gray-600 mt-1">
+                <label class="flex items-center">
+                  <input 
+                    v-model.number="hotel.pax"
+                    type="number"
+                    min="1"
+                    class="w-16 px-2 py-1 border rounded text-center"
+                    @input="calculateHotelRooms(hotel)"
+                  />
+                  <span class="ml-1">чел.</span>
+                </label>
+                <span>{{ hotel.rooms }} номеров</span>
+                <label class="flex items-center">
+                  <input 
+                    v-model="hotel.isForGuide"
+                    type="checkbox"
+                    class="mr-1"
+                    @change="handleDayUpdate"
+                  />
+                  для гида
+                </label>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="font-semibold">${{ hotel.total }}</div>
+              <div class="text-sm text-gray-500">
+                ${{ hotel.pricePerRoom }}/номер
+              </div>
+            </div>
+          </div>
+        </div>
+        <button 
+          class="mt-2 text-blue-600 text-sm hover:text-blue-800 flex items-center"
+          @click="addHotel"
+        >
+          <Plus :size="16" class="mr-1" />
+          Добавить отель
+        </button>
+      </div>
+      
+      <!-- Кнопки действий -->
+      <div class="p-4 bg-gray-50">
+        <div class="flex flex-wrap gap-2">
+          <button 
+            class="btn-secondary btn-sm"
+            @click="addActivity"
+          >
+            <Plus :size="16" />
+            Добавить активность
+          </button>
+          <button 
+            class="btn-secondary btn-sm"
+            @click="addHotel"
+          >
+            <Hotel :size="16" />
+            Добавить отель
+          </button>
+          <button 
+            class="btn-secondary btn-sm"
+            @click="duplicateDay"
+          >
+            <Copy :size="16" />
+            Дублировать день
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed } from 'vue'
+import { 
+  GripVertical, ChevronDown, Trash2, Plus, 
+  Hotel, Copy 
+} from 'lucide-vue-next'
+import { format, parseISO } from 'date-fns'
+import { ru } from 'date-fns/locale'
+import ActivityRow from './ActivityRow.vue'
+import { useEstimateStore } from '@/stores/estimateStore'
+
+// Props
+const props = defineProps({
+  day: {
+    type: Object,
+    required: true
+  }
+})
+
+// Emits
+const emit = defineEmits(['update', 'delete', 'duplicate'])
+
+const estimateStore = useEstimateStore()
+
+// Локальное состояние
+const isExpanded = ref(true)
+const isDragging = ref(false)
+
+// Вычисляемые свойства
+const dayTotal = computed(() => {
+  let total = 0
+  
+  // Сумма активностей
+  if (props.day.activities) {
+    total += props.day.activities.reduce((sum, activity) => {
+      return sum + (activity.quantity * activity.pricePerUnit)
+    }, 0)
+  }
+  
+  // Сумма отелей
+  if (props.day.hotels) {
+    total += props.day.hotels.reduce((sum, hotel) => {
+      return sum + hotel.total
+    }, 0)
+  }
+  
+  return total.toFixed(2)
+})
+
+// Методы
+const formatDate = (dateString) => {
+  try {
+    return format(parseISO(dateString), 'd MMMM', { locale: ru })
+  } catch {
+    return dateString
+  }
+}
+
+const toggleExpanded = () => {
+  isExpanded.value = !isExpanded.value
+}
+
+const handleDragStart = () => {
+  isDragging.value = true
+  // Логика drag & drop будет добавлена позже
+}
+
+const handleDayUpdate = () => {
+  emit('update', props.day)
+}
+
+const handleDeleteDay = () => {
+  if (confirm('Удалить этот день?')) {
+    emit('delete', props.day.id)
+  }
+}
+
+const addActivity = () => {
+  const newActivity = {
+    id: `activity_${Date.now()}`,
+    type: 'other',
+    description: '',
+    quantity: 1,
+    pricePerUnit: 0,
+    supplier: ''
+  }
+  
+  if (!props.day.activities) {
+    props.day.activities = []
+  }
+  
+  props.day.activities.push(newActivity)
+  handleDayUpdate()
+}
+
+const addHotel = () => {
+  const newHotel = {
+    id: `hotel_${Date.now()}`,
+    name: '',
+    pax: 2,
+    rooms: 1,
+    pricePerRoom: 100,
+    total: 100,
+    isForGuide: false
+  }
+  
+  if (!props.day.hotels) {
+    props.day.hotels = []
+  }
+  
+  props.day.hotels.push(newHotel)
+  handleDayUpdate()
+}
+
+const calculateHotelRooms = (hotel) => {
+  // Округляем количество номеров вверх для нечетного количества гостей
+  hotel.rooms = Math.ceil(hotel.pax / 2)
+  hotel.total = hotel.rooms * hotel.pricePerRoom
+  handleDayUpdate()
+}
+
+const duplicateDay = () => {
+  emit('duplicate', props.day.id)
+}
+
+const handleActivityUpdate = (activity) => {
+  handleDayUpdate()
+}
+
+const handleActivityDelete = (activityId) => {
+  const index = props.day.activities.findIndex(a => a.id === activityId)
+  if (index > -1) {
+    props.day.activities.splice(index, 1)
+    handleDayUpdate()
+  }
+}
+</script>
+
+<!-- ===== СТРОКА АКТИВНОСТИ ===== -->
+<!-- src/components/estimate/ActivityRow.vue -->
+<template>
+  <div 
+    class="activity-row"
+    :class="{ 'dragging': isDragging }"
+    draggable="true"
+    @dragstart="handleDragStart"
+    @dragend="handleDragEnd"
+  >
+    <div class="flex items-center gap-4">
+      <!-- Иконка типа активности -->
+      <div class="flex-shrink-0">
+        <span class="text-2xl">{{ getActivityIcon(activity.type) }}</span>
+      </div>
+      
+      <!-- Основная информация -->
+      <div class="flex-1 grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+        <!-- Тип активности -->
+        <div class="form-group mb-0">
+          <select 
+            v-model="activity.type"
+            class="form-control text-xs"
+            @change="handleActivityUpdate"
+          >
+            <option value="transport">🚗 Транспорт</option>
+            <option value="hotel">🏨 Отель</option>
+            <option value="meal">🍽️ Питание</option>
+            <option value="excursion">🎯 Экскурсия</option>
+            <option value="flight">✈️ Перелет</option>
+            <option value="entrance">🎫 Входные билеты</option>
+            <option value="guide">👨‍🏫 Гид</option>
+            <option value="other">📋 Прочее</option>
+          </select>
+        </div>
+        
+        <!-- Описание -->
+        <div class="form-group mb-0 md:col-span-2">
+          <input 
+            v-model="activity.description"
+            type="text"
+            class="form-control text-sm"
+            placeholder="Описание услуги..."
+            @input="handleActivityUpdate"
+          />
+        </div>
+        
+        <!-- Количество -->
+        <div class="form-group mb-0">
+          <input 
+            v-model.number="activity.quantity"
+            type="number"
+            min="0"
+            step="0.01"
+            class="form-control text-sm text-center"
+            @input="handleActivityUpdate"
+          />
+        </div>
+        
+        <!-- Цена за единицу -->
+        <div class="form-group mb-0">
+          <input 
+            v-model.number="activity.pricePerUnit"
+            type="number"
+            min="0"
+            step="0.01"
+            class="form-control text-sm text-center"
+            @input="handleActivityUpdate"
+          />
+        </div>
+      </div>
+      
+      <!-- Итого и действия -->
+      <div class="flex-shrink-0 flex items-center gap-4">
+        <div class="text-right min-w-[80px]">
+          <div class="font-semibold text-gray-900">
+            ${{ activityTotal }}
+          </div>
+          <div class="text-xs text-gray-500">
+            итого
+          </div>
+        </div>
+        
+        <!-- Кнопки действий -->
+        <div class="flex space-x-1">
+          <button 
+            class="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+            title="Дублировать"
+            @click="handleDuplicate"
+          >
+            <Copy :size="14" />
+          </button>
+          <button 
+            class="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+            title="Удалить"
+            @click="handleDelete"
+          >
+            <Trash2 :size="14" />
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Дополнительная информация -->
+    <div v-if="activity.supplier || activity.notes" class="mt-2 pt-2 border-t border-gray-100">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div v-if="activity.supplier" class="text-xs text-gray-600">
+          <span class="font-medium">Поставщик:</span> {{ activity.supplier }}
+        </div>
+        <div v-if="activity.notes" class="text-xs text-gray-600">
+          <span class="font-medium">Заметки:</span> {{ activity.notes }}
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed } from 'vue'
+import { Copy, Trash2 } from 'lucide-vue-next'
+
+// Props
+const props = defineProps({
+  activity: {
+    type: Object,
+    required: true
+  },
+  dayId: {
+    type: String,
+    required: true
+  },
+  activityIndex: {
+    type: Number,
+    required: true
+  }
+})
+
+// Emits
+const emit = defineEmits(['update', 'delete', 'duplicate'])
+
+// Локальное состояние
+const isDragging = ref(false)
+
+// Вычисляемые свойства
+const activityTotal = computed(() => {
+  const total = (props.activity.quantity || 0) * (props.activity.pricePerUnit || 0)
+  return total.toFixed(2)
+})
+
+// Методы
+const getActivityIcon = (type) => {
+  const icons = {
+    transport: '🚗',
+    hotel: '🏨',
+    meal: '🍽️',
+    excursion: '🎯',
+    flight: '✈️',
+    entrance: '🎫',
+    guide: '👨‍🏫',
+    other: '📋'
+  }
+  return icons[type] || '📋'
+}
+
+const handleActivityUpdate = () => {
+  emit('update', props.activity)
+}
+
+const handleDelete = () => {
+  if (confirm('Удалить эту активность?')) {
+    emit('delete', props.activity.id)
+  }
+}
+
+const handleDuplicate = () => {
+  const duplicated = {
+    ...props.activity,
+    id: `activity_${Date.now()}`,
+    description: `${props.activity.description} (копия)`
+  }
+  emit('duplicate', duplicated)
+}
+
+const handleDragStart = (event) => {
+  isDragging.value = true
+  event.dataTransfer.setData('application/json', JSON.stringify({
+    type: 'activity',
+    dayId: props.dayId,
+    activityIndex: props.activityIndex,
+    activity: props.activity
+  }))
+}
+
+const handleDragEnd = () => {
+  isDragging.value = false
+}
+</script>
+
+<!-- ===== КОНТЕЙНЕР УВЕДОМЛЕНИЙ ===== -->
+<!-- src/components/common/ToastContainer.vue -->
+<template>
+  <teleport to="body">
+    <div class="toast-container">
+      <transition-group name="toast" tag="div">
+        <div
+          v-for="toast in toasts"
+          :key="toast.id"
+          class="toast"
+          :class="`toast-${toast.type}`"
+        >
+          <div class="flex items-center gap-3">
+            <div class="toast-icon">
+              <component :is="getIcon(toast.type)" :size="20" />
+            </div>
+            <div class="flex-1">
+              <p class="font-medium text-gray-900">{{ toast.title }}</p>
+              <p v-if="toast.message" class="text-sm text-gray-600">
+                {{ toast.message }}
+              </p>
+            </div>
+            <button 
+              class="text-gray-400 hover:text-gray-600"
+              @click="removeToast(toast.id)"
+            >
+              <X :size="16" />
+            </button>
+          </div>
+        </div>
+      </transition-group>
+    </div>
+  </teleport>
+</template>
+
+<script setup>
+import { computed } from 'vue'
+import { Check, AlertTriangle, X as XIcon, Info } from 'lucide-vue-next'
+import { useToastStore } from '@/stores/toastStore'
+
+const toastStore = useToastStore()
+const toasts = computed(() => toastStore.toasts)
+
+const getIcon = (type) => {
+  const icons = {
+    success: Check,
+    warning: AlertTriangle,
+    error: XIcon,
+    info: Info
+  }
+  return icons[type] || Info
+}
+
+const removeToast = (id) => {
+  toastStore.removeToast(id)
+}
+</script>
+
+<style scoped>
+.toast-container {
+  @apply fixed top-4 right-4 z-50 flex flex-col gap-2;
+}
+
+.toast {
+  @apply bg-white border border-gray-200 rounded-lg shadow-xl p-4 max-w-md;
+  @apply border-l-4;
+}
+
+.toast-success {
+  @apply border-l-green-500;
+}
+
+.toast-warning {
+  @apply border-l-yellow-500;
+}
+
+.toast-error {
+  @apply border-l-red-500;
+}
+
+.toast-info {
+  @apply border-l-blue-500;
+}
+
+.toast-icon {
+  @apply w-8 h-8 rounded-full flex items-center justify-center text-white;
+}
+
+.toast-success .toast-icon {
+  @apply bg-green-500;
+}
+
+.toast-warning .toast-icon {
+  @apply bg-yellow-500;
+}
+
+.toast-error .toast-icon {
+  @apply bg-red-500;
+}
+
+.toast-info .toast-icon {
+  @apply bg-blue-500;
+}
+
+/* Анимации */
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.3s ease;
+}
+
+.toast-enter-from {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
+.toast-leave-to {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
+.toast-move {
+  transition: transform 0.3s ease;
+}
+</style>
