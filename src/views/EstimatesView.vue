@@ -184,6 +184,8 @@ const filteredEstimates = computed(() => {
   }
 
   // Фильтр по стране
+  // Фильтр по стране
+
   if (countryFilter.value) {
     estimates = estimates.filter((estimate) => estimate.country === countryFilter.value)
   }
