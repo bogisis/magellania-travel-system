@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # API сервер
+  api:
+    build:
+      context: ./api-server
+      dockerfile: Dockerfile
+    ports:
+      - '3001:3001'
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+    volumes:
+      - ./api-server/database:/app/database
+    restart: unless-stopped
+    networks:
+      - magellania-network
+
+  # Фронтенд (Nginx)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - '80:80'
+      - '443:443'
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - magellania-network
+
+  # Nginx прокси (альтернативный вариант)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - api
+      - frontend
+    restart: unless-stopped
+    networks:
+      - magellania-network
+
+networks:
+  magellania-network:
+    driver: bridge

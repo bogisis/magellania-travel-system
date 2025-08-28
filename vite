@@ -1,0 +1,8 @@
+
+error when starting dev server:
+Error: Dynamic require of "child_process" is not supported
+    at file:///Users/bogisis/crm_magellania/magellania-travel-system/vite.config.js.timestamp-1756347014548-0eaf81c5ccb52.mjs:5:9
+    at configureServer (file:///Users/bogisis/crm_magellania/magellania-travel-system/vite.config.js.timestamp-1756347014548-0eaf81c5ccb52.mjs:22:25)
+    at _createServer (file:///Users/bogisis/crm_magellania/magellania-travel-system/node_modules/vite/dist/node/chunks/dep-C6uTJdX2.js:63321:26)
+    at async CAC.<anonymous> (file:///Users/bogisis/crm_magellania/magellania-travel-system/node_modules/vite/dist/node/cli.js:736:20)
+

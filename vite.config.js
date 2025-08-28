@@ -1,29 +1,29 @@
 // vite.config.js
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import { fileURLToPath, URL } from 'node:url'
+import { resolve } from 'path'
 
 export default defineConfig({
   plugins: [vue()],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@': resolve(__dirname, 'src'),
     },
   },
   server: {
-    port: 5174,
+    port: 5173,
     open: true,
+    proxy: {
+      // Прокси для API запросов
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
   build: {
     outDir: 'dist',
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['vue', 'vue-router', 'pinia'],
-          charts: ['chart.js', 'vue-chartjs'],
-          pdf: ['jspdf', 'html2canvas'],
-        },
-      },
-    },
+    sourcemap: true,
   },
 })

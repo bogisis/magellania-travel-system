@@ -1,0 +1,28 @@
+{
+  "name": "magellania-api-server",
+  "version": "1.0.0",
+  "description": "API сервер для MAGELLANIA Travel System",
+  "main": "working-server.js",
+  "scripts": {
+    "start": "node working-server.js",
+    "dev": "nodemon working-server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "api",
+    "sqlite",
+    "express",
+    "magellania"
+  ],
+  "author": "Magellania Travel",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^4.19.2",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}

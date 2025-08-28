@@ -68,30 +68,32 @@ class MagellaniaDatabase extends Dexie {
         suppliers:
           '++id, category, name, email, phone, company, country, region, rating, reliability, commission, paymentTerms, notes, active, contracts, performanceMetrics, blacklistStatus, *tags',
       })
-      .upgrade((tx) => {
-        // Добавляем поле tags к существующим записям
-        return tx
-          .table('estimates')
-          .toCollection()
-          .modify((estimate) => {
-            if (!estimate.tags) estimate.tags = []
-          })
-          .then(() => {
-            return tx
-              .table('clients')
-              .toCollection()
-              .modify((client) => {
-                if (!client.tags) client.tags = []
-              })
-          })
-          .then(() => {
-            return tx
-              .table('suppliers')
-              .toCollection()
-              .modify((supplier) => {
-                if (!supplier.tags) supplier.tags = []
-              })
-          })
+      .upgrade(async (tx) => {
+        try {
+          // Добавляем поле tags к существующим записям
+          await tx
+            .table('estimates')
+            .toCollection()
+            .modify((estimate) => {
+              if (!estimate.tags) estimate.tags = []
+            })
+
+          await tx
+            .table('clients')
+            .toCollection()
+            .modify((client) => {
+              if (!client.tags) client.tags = []
+            })
+
+          await tx
+            .table('suppliers')
+            .toCollection()
+            .modify((supplier) => {
+              if (!supplier.tags) supplier.tags = []
+            })
+        } catch (error) {
+          console.warn('Migration 2 warning:', error.message)
+        }
       })
 
     // Миграция версии 3: Добавление системы аудита
@@ -100,14 +102,18 @@ class MagellaniaDatabase extends Dexie {
         activityLogs:
           '++id, userId, action, entityType, entityId, changes, timestamp, ipAddress, userAgent',
       })
-      .upgrade((tx) => {
-        return tx
-          .table('activityLogs')
-          .toCollection()
-          .modify((log) => {
-            if (!log.ipAddress) log.ipAddress = 'unknown'
-            if (!log.userAgent) log.userAgent = 'unknown'
-          })
+      .upgrade(async (tx) => {
+        try {
+          await tx
+            .table('activityLogs')
+            .toCollection()
+            .modify((log) => {
+              if (!log.ipAddress) log.ipAddress = 'unknown'
+              if (!log.userAgent) log.userAgent = 'unknown'
+            })
+        } catch (error) {
+          console.warn('Migration 3 warning:', error.message)
+        }
       })
 
     // Миграция версии 4: Добавление системы резервного копирования
@@ -572,10 +578,75 @@ class MagellaniaDatabase extends Dexie {
 // Экспортируем единственный экземпляр базы данных
 export const db = new MagellaniaDatabase()
 
+// Функция для диагностики базы данных (только для разработки)
+export const diagnoseDatabase = async () => {
+  try {
+    console.log('🔍 Диагностика базы данных...')
+
+    // Проверяем версию
+    try {
+      const version = await db.version()
+      console.log(`📊 Версия базы данных: ${version}`)
+    } catch (e) {
+      console.log('❌ Ошибка получения версии:', e.message)
+    }
+
+    // Проверяем таблицы
+    const tables = ['estimates', 'clients', 'suppliers', 'tariffs', 'backups']
+    for (const table of tables) {
+      try {
+        const count = await db[table].count()
+        console.log(`📋 Таблица ${table}: ${count} записей`)
+      } catch (e) {
+        console.log(`❌ Ошибка таблицы ${table}:`, e.message)
+      }
+    }
+
+    console.log('✅ Диагностика завершена')
+  } catch (error) {
+    console.error('❌ Ошибка диагностики:', error)
+  }
+}
+
+// Функция для очистки базы данных (только для разработки)
+export const clearDatabase = async () => {
+  try {
+    console.log('🗑️ Очистка базы данных...')
+
+    // Закрываем соединение с базой данных
+    await db.close()
+
+    // Удаляем базу данных из IndexedDB
+    await indexedDB.deleteDatabase('MagellaniaTravelDB')
+
+    console.log('✅ База данных очищена')
+    console.log('🔄 Перезагрузка страницы...')
+
+    // Перезагружаем страницу для пересоздания базы данных
+    setTimeout(() => {
+      window.location.reload()
+    }, 1000)
+  } catch (error) {
+    console.error('❌ Ошибка очистки базы данных:', error)
+
+    // Принудительная перезагрузка даже при ошибке
+    console.log('🔄 Принудительная перезагрузка...')
+    window.location.reload()
+  }
+}
+
 // Инициализация базовых данных при первом запуске
 export async function initializeDatabase() {
   try {
     console.log('🚀 Инициализация базы данных MAGELLANIA...')
+
+    // Проверяем версию базы данных
+    try {
+      const currentVersion = await db.version()
+      console.log(`📊 Текущая версия базы данных: ${currentVersion}`)
+    } catch (versionError) {
+      console.warn('⚠️ Не удалось получить версию базы данных:', versionError.message)
+    }
 
     // Проверяем, есть ли уже данные
     const estimatesCount = await db.estimates.count()
@@ -587,19 +658,35 @@ export async function initializeDatabase() {
     }
 
     // Создаем автоматическую резервную копию каждые 7 дней
-    const lastBackup = await db.backups.orderBy('createdAt').reverse().first()
-    const daysSinceLastBackup = lastBackup
-      ? (new Date() - new Date(lastBackup.createdAt)) / (1000 * 60 * 60 * 24)
-      : 999
+    try {
+      const lastBackup = await db.backups.orderBy('createdAt').reverse().first()
+      const daysSinceLastBackup = lastBackup
+        ? (new Date() - new Date(lastBackup.createdAt)) / (1000 * 60 * 60 * 24)
+        : 999
 
-    if (daysSinceLastBackup >= 7) {
-      await db.createBackup()
-      console.log('✅ Автоматическая резервная копия создана')
+      if (daysSinceLastBackup >= 7) {
+        await db.createBackup()
+        console.log('✅ Автоматическая резервная копия создана')
+      }
+    } catch (backupError) {
+      console.warn('⚠️ Ошибка создания резервной копии:', backupError.message)
     }
 
     console.log('✅ База данных инициализирована успешно')
   } catch (error) {
     console.error('❌ Ошибка инициализации базы данных:', error)
+
+    // Если ошибка связана с миграциями или версионированием, предлагаем очистить базу
+    if (
+      error.name === 'ConstraintError' ||
+      error.message.includes('index') ||
+      error.message.includes('version') ||
+      error.message.includes('positive number')
+    ) {
+      console.warn('🔄 Обнаружена проблема с базой данных. Рекомендуется очистить базу данных.')
+      console.warn('💡 Для очистки выполните: clearDatabase() в консоли браузера')
+    }
+
     throw error
   }
 }

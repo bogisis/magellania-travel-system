@@ -97,6 +97,15 @@ const router = createRouter({
       },
     },
     {
+      path: '/migration',
+      name: 'database-migration',
+      component: () => import('@/views/DatabaseMigrationView.vue'),
+      meta: {
+        title: 'Миграция базы данных',
+        requiresAuth: false,
+      },
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
       component: () => import('@/views/NotFoundView.vue'),

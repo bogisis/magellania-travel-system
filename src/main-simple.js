@@ -1,42 +1,23 @@
-// src/main.js
+// src/main-simple.js
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import router from './router'
 import { initializeSimpleDatabase } from './services/database-simple.js'
-import { ErrorHandler } from './services/errorHandler.js'
 import ToastContainer from './components/common/ToastContainer.vue'
 
 import App from './App.vue'
 import './style.css'
 
-// Глобальная обработка ошибок
-const errorHandler = (error, instance, info) => {
-  console.error('Vue Error:', error)
-  console.error('Component:', instance)
-  console.error('Info:', info)
-
-  // Обрабатываем ошибку через централизованную систему
-  ErrorHandler.handle(error, 'vue-error', {
-    additionalData: {
-      component: instance?.$options?.name || 'unknown',
-      info,
-    },
-  })
-}
-
 // Создание приложения
 const app = createApp(App)
-
-// Обработчик ошибок
-app.config.errorHandler = errorHandler
 
 // Подключение плагинов
 app.use(createPinia())
 app.use(router)
 
-// Глобальные свойства (если нужны)
+// Глобальные свойства
 app.config.globalProperties.$formatCurrency = (amount) => {
-  return new Intl.NumberFormat('en-US').format(amount || 0)
+  return new Intl.NumberFormat('ru-RU').format(amount || 0)
 }
 
 app.config.globalProperties.$formatDate = (date, options = {}) => {
@@ -49,19 +30,10 @@ app.config.globalProperties.$formatDate = (date, options = {}) => {
   })
 }
 
-// Глобальные методы для обработки ошибок
-app.config.globalProperties.$handleError = ErrorHandler.handle
-app.config.globalProperties.$createError = ErrorHandler.createError
-
-// Глобальные методы для разработки
-if (import.meta.env.DEV) {
-  console.log('🔧 Режим разработки: упрощенная база данных')
-}
-
 // Инициализация приложения
-async function initApp() {
+async function initSimpleApp() {
   try {
-    console.log('🚀 Инициализация MAGELLANIA Travel System...')
+    console.log('🚀 Инициализация MAGELLANIA Travel System (упрощенная версия)...')
 
     // Инициализация упрощенной базы данных
     await initializeSimpleDatabase()
@@ -72,11 +44,6 @@ async function initApp() {
     console.log('✅ Приложение запущено успешно')
   } catch (error) {
     console.error('❌ Ошибка инициализации приложения:', error)
-
-    // Обрабатываем ошибку через централизованную систему
-    ErrorHandler.handle(error, 'app-init', {
-      severity: 'critical',
-    })
 
     // Простое отображение ошибки
     document.getElementById('app').innerHTML = `
@@ -133,4 +100,4 @@ async function initApp() {
 }
 
 // Запуск приложения
-initApp()
+initSimpleApp()

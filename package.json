@@ -5,6 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "start": "node start-simple.cjs",
+    "api": "cd api-server && node working-server.js",
+    "status": "node check-status.cjs",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix",
@@ -30,6 +33,7 @@
     "@types/papaparse": "^5.3.14",
     "@vitejs/plugin-vue": "^5.0.4",
     "autoprefixer": "^10.4.19",
+    "concurrently": "^9.2.1",
     "eslint": "^8.57.0",
     "eslint-plugin-vue": "^9.24.0",
     "postcss": "^8.4.38",
