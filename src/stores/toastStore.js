@@ -1,138 +1,72 @@
 // src/stores/toastStore.js
 
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 
 export const useToastStore = defineStore('toast', () => {
-  // Состояние
+  // State
   const toasts = ref([])
-  const maxToasts = 10
+  const nextId = ref(1)
 
-  // Вычисляемые свойства
-  const activeToasts = computed(() => 
-    toasts.value.filter(toast => !toast.isRemoved)
-  )
-
-  const hasToasts = computed(() => activeToasts.value.length > 0)
-
-  // Действия
-  const addToast = (toast) => {
-    const id = `toast_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    const newToast = {
-      id,
-      type: toast.type || 'info',
-      title: toast.title || '',
-      message: toast.message || '',
-      duration: toast.duration || 5000,
-      isRemoved: false,
-      createdAt: new Date(),
-      actions: toast.actions || [],
-      ...toast
+  // Actions
+  function showToast(message, type = 'info', duration = 5000) {
+    const toast = {
+      id: nextId.value++,
+      message,
+      type,
+      timestamp: Date.now(),
     }
 
-    toasts.value.unshift(newToast)
+    toasts.value.push(toast)
 
-    // Ограничиваем количество уведомлений
-    if (toasts.value.length > maxToasts) {
-      toasts.value = toasts.value.slice(0, maxToasts)
-    }
-
-    // Автоудаление через заданное время
-    if (newToast.duration > 0) {
+    // Автоматическое удаление через указанное время
+    if (duration > 0) {
       setTimeout(() => {
-        removeToast(id)
-      }, newToast.duration)
+        removeToast(toast.id)
+      }, duration)
     }
 
-    return newToast
+    return toast.id
   }
 
-  const removeToast = (toastId) => {
-    const index = toasts.value.findIndex(toast => toast.id === toastId)
-    if (index > -1) {
-      toasts.value[index].isRemoved = true
-      
-      // Удаляем из массива через анимацию
-      setTimeout(() => {
-        toasts.value.splice(index, 1)
-      }, 300)
+  function showSuccess(message, duration = 5000) {
+    return showToast(message, 'success', duration)
+  }
+
+  function showError(message, duration = 5000) {
+    return showToast(message, 'error', duration)
+  }
+
+  function showWarning(message, duration = 5000) {
+    return showToast(message, 'warning', duration)
+  }
+
+  function showInfo(message, duration = 5000) {
+    return showToast(message, 'info', duration)
+  }
+
+  function removeToast(id) {
+    const index = toasts.value.findIndex((toast) => toast.id === id)
+    if (index !== -1) {
+      toasts.value.splice(index, 1)
     }
   }
 
-  const clearAllToasts = () => {
-    toasts.value.forEach(toast => {
-      toast.isRemoved = true
-    })
-    
-    setTimeout(() => {
-      toasts.value = []
-    }, 300)
-  }
-
-  // Быстрые методы для разных типов уведомлений
-  const success = (title, message, options = {}) => {
-    return addToast({ 
-      type: 'success', 
-      title, 
-      message, 
-      ...options 
-    })
-  }
-
-  const error = (title, message, options = {}) => {
-    return addToast({ 
-      type: 'error', 
-      title, 
-      message, 
-      duration: 0, // Ошибки не исчезают автоматически
-      ...options 
-    })
-  }
-
-  const warning = (title, message, options = {}) => {
-    return addToast({ 
-      type: 'warning', 
-      title, 
-      message, 
-      ...options 
-    })
-  }
-
-  const info = (title, message, options = {}) => {
-    return addToast({ 
-      type: 'info', 
-      title, 
-      message, 
-      ...options 
-    })
-  }
-
-  const loading = (title, message, options = {}) => {
-    return addToast({ 
-      type: 'loading', 
-      title, 
-      message, 
-      duration: 0, // Loading не исчезает автоматически
-      ...options 
-    })
+  function clearToasts() {
+    toasts.value = []
   }
 
   return {
-    // Состояние
+    // State
     toasts,
-    
-    // Вычисляемые свойства
-    activeToasts,
-    hasToasts,
-    
-    // Действия
-    addToast,
+
+    // Actions
+    showToast,
+    showSuccess,
+    showError,
+    showWarning,
+    showInfo,
     removeToast,
-    clearAllToasts,
-    success,
-    error,
-    warning,
-    info,
-    loading
+    clearToasts,
   }
 })

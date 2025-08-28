@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { db } from '@/services/database.js'
+import { apiService } from '@/services/apiService.js'
 
 export const useAnalyticsStore = defineStore('analytics', () => {
   const dashboardStats = ref({})
@@ -11,8 +11,8 @@ export const useAnalyticsStore = defineStore('analytics', () => {
   // Computed свойства
   const conversionRate = computed(() => {
     if (dashboardStats.value.totalEstimates > 0) {
-      const approved = dashboardStats.value.totalEstimates - 
-        (dashboardStats.value.activeEstimates || 0)
+      const approved =
+        dashboardStats.value.totalEstimates - (dashboardStats.value.activeEstimates || 0)
       return Math.round((approved / dashboardStats.value.totalEstimates) * 100)
     }
     return 0
@@ -22,12 +22,28 @@ export const useAnalyticsStore = defineStore('analytics', () => {
   async function fetchDashboardStats() {
     loading.value = true
     error.value = null
-    
+
     try {
-      dashboardStats.value = await db.getDashboardStats()
+      // Получаем данные через API
+      const estimates = await apiService.getEstimates()
+      const clients = await apiService.getClients()
+
+      // Рассчитываем статистику
+      const totalEstimates = estimates.length
+      const activeEstimates = estimates.filter((e) => e.status === 'draft').length
+      const approvedEstimates = estimates.filter((e) => e.status === 'confirmed').length
+      const totalRevenue = estimates.reduce((sum, e) => sum + (e.totalPrice || 0), 0)
+
+      dashboardStats.value = {
+        totalEstimates,
+        activeEstimates,
+        approvedEstimates,
+        totalRevenue,
+        totalClients: clients.length,
+      }
     } catch (err) {
       error.value = 'Ошибка загрузки статистики'
-      console.error(err)
+      console.error('Error: Не удалось получить статистику:', err.message)
     } finally {
       loading.value = false
     }
@@ -39,11 +55,11 @@ export const useAnalyticsStore = defineStore('analytics', () => {
     salesChartData,
     loading,
     error,
-    
+
     // Getters
     conversionRate,
-    
+
     // Actions
-    fetchDashboardStats
+    fetchDashboardStats,
   }
 })

@@ -62,6 +62,8 @@
     <div class="bg-white rounded-xl shadow-soft p-6">
       <!-- Шаг 1: Основная информация -->
       <div v-if="currentStep === 1" class="space-y-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Основная информация</h3>
+
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <BaseInput
             v-model="estimate.name"
@@ -77,71 +79,25 @@
             placeholder="Патагония: Край света"
             :error="errors.tourName"
           />
+        </div>
 
-          <div>
-            <label class="form-label">Страна</label>
-            <select v-model="estimate.country" class="form-input" required>
-              <option value="">Выберите страну</option>
-              <option value="Argentina">Аргентина</option>
-              <option value="Chile">Чили</option>
-              <option value="Peru">Перу</option>
-              <option value="Uruguay">Уругвай</option>
-            </select>
-            <p v-if="errors.country" class="form-error">{{ errors.country }}</p>
-          </div>
-
-          <BaseInput
-            v-model="estimate.region"
-            label="Регион"
-            placeholder="Патагония, Буэнос-Айрес..."
-          />
-
-          <BaseInput
-            v-model="estimate.startDate"
-            type="date"
-            label="Дата начала тура"
-            required
-            :error="errors.startDate"
-          />
-
-          <BaseInput
-            v-model.number="estimate.duration"
-            type="number"
-            label="Продолжительность (дни)"
-            min="1"
-            max="365"
-            required
-            :error="errors.duration"
+        <!-- Выбор локации -->
+        <div>
+          <h4 class="text-sm font-medium text-gray-900 mb-3">Локация тура</h4>
+          <LocationSelector
+            v-model="estimate.location"
+            :errors="errors.location"
+            @change="onLocationChange"
           />
         </div>
 
-        <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
-          <BaseInput
-            v-model.number="estimate.paxCount"
-            type="number"
-            label="Количество туристов"
-            min="1"
-            max="50"
-            required
-            :error="errors.paxCount"
-          />
-
-          <BaseInput
-            v-model.number="estimate.margin"
-            type="number"
-            label="Наценка (%)"
-            min="0"
-            max="100"
-            :hint="`Прибыль: ${calculateMargin()}`"
-          />
-
-          <BaseInput
-            v-model.number="estimate.discount"
-            type="number"
-            label="Скидка (%)"
-            min="0"
-            max="50"
-            :hint="`Экономия: ${calculateDiscount()}`"
+        <!-- Даты тура -->
+        <div>
+          <h4 class="text-sm font-medium text-gray-900 mb-3">Даты тура</h4>
+          <TourDateSelector
+            v-model="estimate.tourDates"
+            :errors="errors.tourDates"
+            @change="onTourDatesChange"
           />
         </div>
 
@@ -156,611 +112,261 @@
         </div>
       </div>
 
-      <!-- Шаг 2: Планирование дней -->
+      <!-- Шаг 2: Группа туристов -->
       <div v-if="currentStep === 2" class="space-y-6">
-        <div class="flex items-center justify-between">
-          <h3 class="text-lg font-medium text-gray-900">
-            Планирование дней тура ({{ estimate.duration }} дней)
-          </h3>
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Группа туристов</h3>
 
-          <BaseButton variant="outline" size="sm" :icon="Wand2" @click="generateDaysFromTemplate">
-            Создать по шаблону
-          </BaseButton>
-        </div>
-
-        <div class="space-y-4">
-          <div
-            v-for="(day, dayIndex) in tourDays"
-            :key="dayIndex"
-            class="border border-gray-200 rounded-lg p-4 hover:border-primary-300 transition-colors"
-          >
-            <div class="flex items-center justify-between mb-4">
-              <div class="flex items-center space-x-3">
-                <div
-                  class="w-8 h-8 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center text-sm font-medium"
-                >
-                  {{ dayIndex + 1 }}
-                </div>
-                <div>
-                  <h4 class="text-sm font-medium text-gray-900">
-                    День {{ dayIndex + 1 }} - {{ formatDate(day.date) }}
-                  </h4>
-                  <p class="text-xs text-gray-500">{{ day.location }}</p>
-                </div>
-              </div>
-
-              <div class="text-right">
-                <p class="text-sm font-medium text-gray-900">
-                  ${{ formatCurrency(day.totalPrice || 0) }}
-                </p>
-                <p class="text-xs text-gray-500">за день</p>
-              </div>
-            </div>
-
-            <BaseInput
-              v-model="day.title"
-              placeholder="Название дня (например: Прилет в Буэнос-Айрес)"
-              size="sm"
-              class="mb-3"
-            />
-
-            <BaseInput v-model="day.location" placeholder="Локация" size="sm" class="mb-3" />
-
-            <!-- Активности дня -->
-            <div class="space-y-2">
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-medium text-gray-700">Активности</span>
-                <BaseButton variant="ghost" size="sm" :icon="Plus" @click="addActivity(dayIndex)">
-                  Добавить
-                </BaseButton>
-              </div>
-
-              <div
-                v-for="(activity, actIndex) in day.activities"
-                :key="actIndex"
-                class="flex items-center space-x-2 bg-gray-50 p-2 rounded-md"
-              >
-                <select
-                  v-model="activity.category"
-                  class="text-xs border-none bg-transparent focus:ring-0"
-                >
-                  <option value="transport">🚗 Транспорт</option>
-                  <option value="excursion">📸 Экскурсия</option>
-                  <option value="meal">🍽️ Питание</option>
-                  <option value="hotel">🏨 Отель</option>
-                  <option value="other">📋 Другое</option>
-                </select>
-
-                <input
-                  v-model="activity.name"
-                  placeholder="Название активности"
-                  class="flex-1 text-xs border-none bg-transparent focus:ring-0"
-                />
-
-                <input
-                  v-model.number="activity.quantity"
-                  type="number"
-                  min="1"
-                  class="w-12 text-xs border-none bg-transparent focus:ring-0"
-                />
-
-                <input
-                  v-model.number="activity.pricePerUnit"
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  class="w-20 text-xs border-none bg-transparent focus:ring-0"
-                />
-
-                <button
-                  @click="removeActivity(dayIndex, actIndex)"
-                  class="text-red-500 hover:text-red-700"
-                >
-                  <X class="w-3 h-3" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <GroupManager
+          v-model="estimate.groupData"
+          :errors="errors.groupData"
+          @change="onGroupDataChange"
+        />
       </div>
 
-      <!-- Шаг 3: Опциональные услуги -->
+      <!-- Шаг 3: Гостиницы -->
       <div v-if="currentStep === 3" class="space-y-6">
-        <div class="flex items-center justify-between">
-          <h3 class="text-lg font-medium text-gray-900">Опциональные услуги</h3>
-          <p class="text-sm text-gray-500">Услуги, которые клиент может выбрать дополнительно</p>
-        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Гостиницы</h3>
 
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div
-            v-for="option in availableOptions"
-            :key="option.id"
-            class="border border-gray-200 rounded-lg p-4 hover:border-primary-300 transition-colors"
-          >
-            <div class="flex items-start space-x-3">
-              <input
-                :id="`option-${option.id}`"
-                v-model="selectedOptions"
-                :value="option.id"
-                type="checkbox"
-                class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-              />
-
-              <div class="flex-1">
-                <label
-                  :for="`option-${option.id}`"
-                  class="text-sm font-medium text-gray-900 cursor-pointer"
-                >
-                  {{ option.name }}
-                </label>
-                <p class="text-xs text-gray-500 mt-1">{{ option.description }}</p>
-                <p class="text-sm font-medium text-primary-600 mt-2">
-                  ${{ formatCurrency(option.price) }}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Кастомная опция -->
-        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
-          <h4 class="text-sm font-medium text-gray-700 mb-3">Добавить кастомную услугу</h4>
-
-          <div class="grid grid-cols-1 gap-3 sm:grid-cols-4">
-            <BaseInput v-model="customOption.name" placeholder="Название услуги" size="sm" />
-
-            <BaseInput v-model="customOption.description" placeholder="Описание" size="sm" />
-
-            <BaseInput
-              v-model.number="customOption.price"
-              type="number"
-              step="0.01"
-              placeholder="Цена"
-              size="sm"
-            />
-
-            <BaseButton
-              variant="outline"
-              size="sm"
-              :icon="Plus"
-              @click="addCustomOption"
-              :disabled="!customOption.name || !customOption.price"
-            >
-              Добавить
-            </BaseButton>
-          </div>
-        </div>
+        <HotelManager
+          v-model="estimate.hotels"
+          :tour-days="estimate.tourDates.days"
+          @change="onHotelsChange"
+        />
       </div>
 
-      <!-- Шаг 4: Итоговый расчет -->
+      <!-- Шаг 4: Планирование дней -->
       <div v-if="currentStep === 4" class="space-y-6">
-        <div class="text-center">
-          <h3 class="text-2xl font-bold text-gray-900 mb-2">Итоговый расчет сметы</h3>
-          <p class="text-gray-600">Проверьте все данные перед сохранением</p>
-        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Планирование дней</h3>
 
-        <!-- Сводка по туру -->
-        <div class="bg-gray-50 rounded-lg p-6">
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <TourDaysManager
+          v-model="estimate.tourDays"
+          :start-date="estimate.tourDates.startDate"
+          :duration="estimate.tourDates.days"
+          @change="onTourDaysChange"
+        />
+      </div>
+
+      <!-- Шаг 5: Опциональные услуги -->
+      <div v-if="currentStep === 5" class="space-y-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Опциональные услуги</h3>
+
+        <div class="bg-yellow-50 p-4 rounded-lg">
+          <div class="flex items-center space-x-2 mb-2">
+            <Info class="w-5 h-5 text-yellow-600" />
+            <span class="text-sm font-medium text-yellow-900">Информация</span>
+          </div>
+          <p class="text-sm text-yellow-700">
+            Этот раздел находится в разработке. Здесь будут доступны дополнительные услуги, которые
+            можно добавить в смету по выбору клиента.
+          </p>
+        </div>
+      </div>
+
+      <!-- Шаг 6: Итоги и настройки -->
+      <div v-if="currentStep === 6" class="space-y-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Итоги и настройки</h3>
+
+        <!-- Настройки наценки -->
+        <div class="border border-gray-200 rounded-lg p-4">
+          <h4 class="text-sm font-medium text-gray-900 mb-3">Настройки наценки</h4>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <h4 class="text-sm font-medium text-gray-700 mb-3">Основная информация</h4>
-              <dl class="space-y-2">
-                <div class="flex justify-between text-sm">
-                  <dt class="text-gray-500">Название:</dt>
-                  <dd class="text-gray-900 font-medium">{{ estimate.name }}</dd>
-                </div>
-                <div class="flex justify-between text-sm">
-                  <dt class="text-gray-500">Направление:</dt>
-                  <dd class="text-gray-900">{{ estimate.country }}, {{ estimate.region }}</dd>
-                </div>
-                <div class="flex justify-between text-sm">
-                  <dt class="text-gray-500">Даты:</dt>
-                  <dd class="text-gray-900">
-                    {{ formatDate(estimate.startDate) }} - {{ formatDate(endDate) }}
-                  </dd>
-                </div>
-                <div class="flex justify-between text-sm">
-                  <dt class="text-gray-500">Туристы:</dt>
-                  <dd class="text-gray-900">{{ estimate.paxCount }} чел.</dd>
-                </div>
-              </dl>
+              <label class="form-label">Показывать наценку</label>
+              <div class="flex items-center space-x-4">
+                <label class="flex items-center">
+                  <input type="radio" v-model="estimate.showMargin" :value="true" class="mr-2" />
+                  <span class="text-sm">Включить в стоимость</span>
+                </label>
+                <label class="flex items-center">
+                  <input type="radio" v-model="estimate.showMargin" :value="false" class="mr-2" />
+                  <span class="text-sm">Отдельной строкой</span>
+                </label>
+              </div>
             </div>
 
             <div>
-              <h4 class="text-sm font-medium text-gray-700 mb-3">Финансы</h4>
-              <dl class="space-y-2">
-                <div class="flex justify-between text-sm">
-                  <dt class="text-gray-500">Базовая стоимость:</dt>
-                  <dd class="text-gray-900">${{ formatCurrency(baseCost) }}</dd>
-                </div>
-                <div class="flex justify-between text-sm">
-                  <dt class="text-gray-500">Наценка ({{ estimate.margin }}%):</dt>
-                  <dd class="text-green-600">+${{ formatCurrency(marginAmount) }}</dd>
-                </div>
-                <div class="flex justify-between text-sm">
-                  <dt class="text-gray-500">Скидка ({{ estimate.discount }}%):</dt>
-                  <dd class="text-red-600">-${{ formatCurrency(discountAmount) }}</dd>
-                </div>
-                <div class="flex justify-between text-sm">
-                  <dt class="text-gray-500">Опции:</dt>
-                  <dd class="text-gray-900">+${{ formatCurrency(optionsTotal) }}</dd>
-                </div>
-                <div class="flex justify-between text-lg font-bold border-t pt-2">
-                  <dt class="text-gray-900">Итого:</dt>
-                  <dd class="text-primary-600">${{ formatCurrency(totalCost) }}</dd>
-                </div>
-              </dl>
+              <label class="form-label">Валюта</label>
+              <select v-model="estimate.currency" class="form-input">
+                <option value="USD">USD - Доллар США</option>
+                <option value="EUR">EUR - Евро</option>
+                <option value="RUB">RUB - Российский рубль</option>
+                <option value="ARS">ARS - Аргентинский песо</option>
+                <option value="CLP">CLP - Чилийский песо</option>
+              </select>
             </div>
           </div>
         </div>
 
-        <!-- Разбивка по дням -->
-        <div>
-          <h4 class="text-sm font-medium text-gray-700 mb-3">Разбивка по дням</h4>
-          <div class="space-y-2">
-            <div
-              v-for="(day, index) in tourDays"
-              :key="index"
-              class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-md"
-            >
-              <div>
-                <p class="text-sm font-medium text-gray-900">{{ day.title }}</p>
-                <p class="text-xs text-gray-500">
-                  {{ formatDate(day.date) }} • {{ day.activities?.length || 0 }} активностей
-                </p>
-              </div>
-              <p class="text-sm font-medium text-gray-900">
-                ${{ formatCurrency(day.totalPrice || 0) }}
-              </p>
+        <!-- Итоговая информация -->
+        <div class="bg-blue-50 p-4 rounded-lg">
+          <h4 class="text-sm font-medium text-blue-900 mb-3">Итоговая информация</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+            <div>
+              <span class="text-blue-700">Продолжительность:</span>
+              <span class="ml-2 font-medium text-blue-900">{{ estimate.tourDates.days }} дней</span>
+            </div>
+            <div>
+              <span class="text-blue-700">Туристы:</span>
+              <span class="ml-2 font-medium text-blue-900"
+                >{{ estimate.groupData.totalPax }} человек</span
+              >
+            </div>
+            <div>
+              <span class="text-blue-700">Гиды:</span>
+              <span class="ml-2 font-medium text-blue-900"
+                >{{ estimate.groupData.guidesCount }} человек</span
+              >
+            </div>
+            <div>
+              <span class="text-blue-700">Гостиницы:</span>
+              <span class="ml-2 font-medium text-blue-900">{{ estimate.hotels.length }} шт.</span>
+            </div>
+            <div>
+              <span class="text-blue-700">Базовая стоимость:</span>
+              <span class="ml-2 font-medium text-blue-900">{{
+                formatCurrency(calculateBaseCost())
+              }}</span>
+            </div>
+            <div>
+              <span class="text-blue-700">Наценка:</span>
+              <span class="ml-2 font-medium text-blue-900"
+                >{{ estimate.groupData.marginPercent }}%</span
+              >
+            </div>
+            <div>
+              <span class="text-blue-700">Сумма наценки:</span>
+              <span class="ml-2 font-medium text-blue-900">{{
+                formatCurrency(calculateMarginAmount())
+              }}</span>
+            </div>
+            <div>
+              <span class="text-blue-700">Итоговая стоимость:</span>
+              <span class="ml-2 font-medium text-blue-900">{{
+                formatCurrency(calculateFinalCost())
+              }}</span>
             </div>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Навигация между шагами -->
-      <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+    <!-- Навигация по шагам -->
+    <div class="flex items-center justify-between">
+      <BaseButton
+        v-if="currentStep > 1"
+        variant="outline"
+        @click="currentStep--"
+        :icon="ChevronLeft"
+      >
+        Назад
+      </BaseButton>
+      <div></div>
+
+      <div class="flex items-center space-x-2">
         <BaseButton
-          v-if="currentStep > 1"
-          variant="outline"
-          :icon="ChevronLeft"
-          @click="currentStep--"
+          v-if="currentStep < totalSteps"
+          variant="primary"
+          @click="currentStep++"
+          :icon-right="ChevronRight"
         >
-          Назад
+          Далее
         </BaseButton>
-
-        <div v-else></div>
-
-        <div class="flex space-x-3">
-          <BaseButton variant="ghost" @click="saveDraft" :loading="saving">
-            Сохранить черновик
-          </BaseButton>
-
-          <BaseButton
-            v-if="currentStep < totalSteps"
-            variant="primary"
-            :icon="ChevronRight"
-            icon-right
-            @click="nextStep"
-            :disabled="!canProceedToNextStep"
-          >
-            Далее
-          </BaseButton>
-
-          <BaseButton v-else variant="success" :icon="Save" @click="saveEstimate" :loading="saving">
-            Создать смету
-          </BaseButton>
-        </div>
+        <BaseButton
+          v-if="currentStep === totalSteps"
+          variant="primary"
+          @click="saveEstimate"
+          :loading="isSaving"
+          :icon="Save"
+        >
+          Сохранить смету
+        </BaseButton>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { format, addDays } from 'date-fns'
-import { ru } from 'date-fns/locale'
-import {
-  Clock,
-  Loader,
-  CheckCircle,
-  Info,
-  Calendar,
-  MapPin,
-  Users,
-  DollarSign,
-  Wand2,
-  Plus,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  Save,
-} from 'lucide-vue-next'
-
-// Components
-import BaseInput from '@/components/common/BaseInput.vue'
+import { Clock, Loader, CheckCircle, ChevronLeft, ChevronRight, Save, Info } from 'lucide-vue-next'
+import { useEstimateStore } from '@/stores/estimates'
+import { useToastStore } from '@/stores/toastStore'
 import BaseButton from '@/components/common/BaseButton.vue'
-
-// Store
-import { useEstimatesStore } from '@/stores/estimates'
+import BaseInput from '@/components/common/BaseInput.vue'
+import LocationSelector from '@/components/estimates/LocationSelector.vue'
+import TourDateSelector from '@/components/estimates/TourDateSelector.vue'
+import GroupManager from '@/components/estimates/GroupManager.vue'
+import HotelManager from '@/components/estimates/HotelManager.vue'
+import TourDaysManager from '@/components/estimates/TourDaysManager.vue'
 
 const router = useRouter()
-const estimatesStore = useEstimatesStore()
+const estimateStore = useEstimateStore()
+const toastStore = useToastStore()
 
-// Reactive state
+// Состояние
 const currentStep = ref(1)
-const totalSteps = ref(4)
+const isSaving = ref(false)
 const autoSaving = ref(false)
-const saving = ref(false)
 const errors = ref({})
 
+// Шаги создания сметы
 const steps = [
-  { id: 1, title: 'Информация', icon: Info },
-  { id: 2, title: 'Планирование', icon: Calendar },
-  { id: 3, title: 'Опции', icon: DollarSign },
-  { id: 4, title: 'Итог', icon: CheckCircle },
+  { id: 1, title: 'Основная информация', icon: 'FileText' },
+  { id: 2, title: 'Группа туристов', icon: 'Users' },
+  { id: 3, title: 'Гостиницы', icon: 'Building' },
+  { id: 4, title: 'Планирование дней', icon: 'Calendar' },
+  { id: 5, title: 'Опциональные услуги', icon: 'Plus' },
+  { id: 6, title: 'Итоги', icon: 'CheckCircle' },
 ]
 
-// Основные данные сметы
+const totalSteps = computed(() => steps.length)
+
+// Данные сметы
 const estimate = ref({
   name: '',
   tourName: '',
-  country: '',
-  region: '',
-  startDate: '',
-  duration: 7,
-  paxCount: 2,
-  margin: 20,
-  discount: 0,
   description: '',
-})
-
-// Дни тура
-const tourDays = ref([])
-
-// Опциональные услуги
-const selectedOptions = ref([])
-const customOption = ref({ name: '', description: '', price: 0 })
-
-const availableOptions = ref([
-  {
-    id: 1,
-    name: 'Страховка путешествий',
-    description: 'Комплексная страховка на время тура',
-    price: 150,
-    category: 'insurance',
+  location: {
+    country: '',
+    region: '',
+    city: '',
   },
-  {
-    id: 2,
-    name: 'Дополнительная экскурсия по винодельням',
-    description: 'Полудневная экскурсия с дегустацией',
-    price: 85,
-    category: 'excursion',
+  tourDates: {
+    dateType: 'exact',
+    startDate: '',
+    endDate: '',
+    days: 0,
+    conditionalStartDate: '',
+    conditionalDays: 0,
   },
-  {
-    id: 3,
-    name: 'Индивидуальный трансфер',
-    description: 'Комфортный трансфер на всех маршрутах',
-    price: 200,
-    category: 'transport',
+  groupData: {
+    totalPax: 1,
+    guidesCount: 1,
+    marginPercent: 15,
+    doubleCount: 0,
+    doublePrice: 0,
+    singleCount: 0,
+    singlePrice: 0,
+    tripleCount: 0,
+    triplePrice: 0,
+    extraCount: 0,
+    extraPrice: 0,
   },
-])
-
-// Computed properties
-const endDate = computed(() => {
-  if (!estimate.value.startDate || !estimate.value.duration) return ''
-  return format(
-    addDays(new Date(estimate.value.startDate), estimate.value.duration - 1),
-    'yyyy-MM-dd',
-  )
+  hotels: [],
+  tourDays: [],
+  showMargin: true,
+  currency: 'USD',
 })
-
-const baseCost = computed(() => {
-  return tourDays.value.reduce((sum, day) => sum + (day.totalPrice || 0), 0)
-})
-
-const marginAmount = computed(() => {
-  return (baseCost.value * estimate.value.margin) / 100
-})
-
-const discountAmount = computed(() => {
-  return ((baseCost.value + marginAmount.value) * estimate.value.discount) / 100
-})
-
-const optionsTotal = computed(() => {
-  return selectedOptions.value.reduce((sum, optionId) => {
-    const option = availableOptions.value.find((opt) => opt.id === optionId)
-    return sum + (option?.price || 0)
-  }, 0)
-})
-
-const totalCost = computed(() => {
-  return baseCost.value + marginAmount.value - discountAmount.value + optionsTotal.value
-})
-
-const canProceedToNextStep = computed(() => {
-  switch (currentStep.value) {
-    case 1:
-      return (
-        estimate.value.name &&
-        estimate.value.country &&
-        estimate.value.startDate &&
-        estimate.value.duration
-      )
-    case 2:
-      return tourDays.value.length > 0
-    case 3:
-      return true // Опции не обязательны
-    case 4:
-      return true
-    default:
-      return false
-  }
-})
-
-// Methods
-function formatCurrency(amount) {
-  return new Intl.NumberFormat('en-US').format(amount || 0)
-}
-
-function formatDate(date) {
-  if (!date) return ''
-  return format(new Date(date), 'dd MMM yyyy', { locale: ru })
-}
-
-function calculateMargin() {
-  return formatCurrency(marginAmount.value)
-}
-
-function calculateDiscount() {
-  return formatCurrency(discountAmount.value)
-}
-
-function generateDaysFromTemplate() {
-  const days = []
-
-  for (let i = 0; i < estimate.value.duration; i++) {
-    const dayDate = addDays(new Date(estimate.value.startDate), i)
-
-    days.push({
-      dayNumber: i + 1,
-      date: format(dayDate, 'yyyy-MM-dd'),
-      title: `День ${i + 1}`,
-      location: estimate.value.region || estimate.value.country,
-      activities: [],
-      totalPrice: 0,
-    })
-  }
-
-  tourDays.value = days
-}
-
-function addActivity(dayIndex) {
-  tourDays.value[dayIndex].activities.push({
-    category: 'other',
-    name: '',
-    quantity: 1,
-    pricePerUnit: 0,
-    totalPrice: 0,
-  })
-}
-
-function removeActivity(dayIndex, activityIndex) {
-  tourDays.value[dayIndex].activities.splice(activityIndex, 1)
-  recalculateDayTotal(dayIndex)
-}
-
-function recalculateDayTotal(dayIndex) {
-  const day = tourDays.value[dayIndex]
-  day.totalPrice = day.activities.reduce((sum, activity) => {
-    return sum + activity.quantity * activity.pricePerUnit
-  }, 0)
-}
-
-function addCustomOption() {
-  if (customOption.value.name && customOption.value.price) {
-    const newOption = {
-      id: Date.now(),
-      name: customOption.value.name,
-      description: customOption.value.description,
-      price: parseFloat(customOption.value.price),
-      category: 'custom',
-    }
-
-    availableOptions.value.push(newOption)
-    selectedOptions.value.push(newOption.id)
-
-    // Очищаем форму
-    customOption.value = { name: '', description: '', price: 0 }
-  }
-}
-
-function validateStep(step) {
-  errors.value = {}
-
-  switch (step) {
-    case 1:
-      if (!estimate.value.name) errors.value.name = 'Укажите название сметы'
-      if (!estimate.value.country) errors.value.country = 'Выберите страну'
-      if (!estimate.value.startDate) errors.value.startDate = 'Укажите дату начала'
-      if (!estimate.value.duration || estimate.value.duration < 1) {
-        errors.value.duration = 'Продолжительность должна быть не менее 1 дня'
-      }
-      break
-  }
-
-  return Object.keys(errors.value).length === 0
-}
-
-function nextStep() {
-  if (validateStep(currentStep.value)) {
-    if (currentStep.value === 1 && tourDays.value.length === 0) {
-      generateDaysFromTemplate()
-    }
-    currentStep.value++
-  }
-}
-
-async function saveDraft() {
-  saving.value = true
-
-  try {
-    const estimateData = {
-      ...estimate.value,
-      status: 'draft',
-      tourDays: tourDays.value,
-      selectedOptions: selectedOptions.value,
-      totalPrice: totalCost.value,
-    }
-
-    const estimateId = await estimatesStore.createEstimate(estimateData)
-    window.$toast?.success('Черновик сохранен', 'Смета сохранена как черновик')
-
-    // Перенаправляем на редактирование
-    router.push(`/estimates/${estimateId}/edit`)
-  } catch (error) {
-    window.$toast?.error('Ошибка', 'Не удалось сохранить черновик')
-  } finally {
-    saving.value = false
-  }
-}
-
-async function saveEstimate() {
-  if (!validateStep(currentStep.value)) return
-
-  saving.value = true
-
-  try {
-    const estimateData = {
-      ...estimate.value,
-      status: 'draft',
-      tourDays: tourDays.value,
-      selectedOptions: selectedOptions.value,
-      totalPrice: totalCost.value,
-      baseCost: baseCost.value,
-      marginAmount: marginAmount.value,
-      discountAmount: discountAmount.value,
-      optionsTotal: optionsTotal.value,
-    }
-
-    const estimateId = await estimatesStore.createEstimate(estimateData)
-    window.$toast?.success('Смета создана', 'Смета успешно создана')
-
-    router.push(`/estimates/${estimateId}`)
-  } catch (error) {
-    window.$toast?.error('Ошибка', 'Не удалось создать смету')
-  } finally {
-    saving.value = false
-  }
-}
 
 // Автосохранение
-let autoSaveInterval
-function startAutoSave() {
-  autoSaveInterval = setInterval(async () => {
-    if (estimate.value.name && currentStep.value > 1) {
+let autoSaveInterval = null
+
+const startAutoSave = () => {
+  autoSaveInterval = setInterval(() => {
+    if (estimate.value.name) {
       autoSaving.value = true
-      // Здесь можно добавить логику автосохранения
+      // Здесь будет логика автосохранения
       setTimeout(() => {
         autoSaving.value = false
       }, 1000)
@@ -768,41 +374,117 @@ function startAutoSave() {
   }, 30000) // 30 секунд
 }
 
-// Watchers
-watch(
-  () => tourDays.value,
-  () => {
-    tourDays.value.forEach((day, index) => {
-      recalculateDayTotal(index)
-    })
-  },
-  { deep: true },
-)
+const stopAutoSave = () => {
+  if (autoSaveInterval) {
+    clearInterval(autoSaveInterval)
+    autoSaveInterval = null
+  }
+}
 
-watch(
-  () => estimate.value.duration,
-  (newDuration) => {
-    if (newDuration && estimate.value.startDate) {
-      if (tourDays.value.length === 0 && currentStep.value > 1) {
-        generateDaysFromTemplate()
-      }
+// Обработчики событий
+const onLocationChange = (change) => {
+  console.log('Location changed:', change)
+}
+
+const onTourDatesChange = (change) => {
+  console.log('Tour dates changed:', change)
+}
+
+const onGroupDataChange = (change) => {
+  console.log('Group data changed:', change)
+}
+
+const onHotelsChange = (change) => {
+  console.log('Hotels changed:', change)
+}
+
+const onTourDaysChange = (change) => {
+  console.log('Tour days changed:', change)
+}
+
+// Расчеты
+const calculateBaseCost = () => {
+  // Расчет базовой стоимости на основе дней тура и гостиниц
+  const tourDaysCost = estimate.value.tourDays.reduce((sum, day) => {
+    return (
+      sum +
+      day.activities.reduce((daySum, activity) => {
+        return daySum + Number(activity.cost || 0)
+      }, 0)
+    )
+  }, 0)
+
+  const hotelsCost = estimate.value.hotels.reduce((sum, hotel) => {
+    const rooms =
+      hotel.accommodationType === 'double'
+        ? Math.ceil(Number(hotel.paxCount) / 2)
+        : Number(hotel.paxCount)
+    return sum + rooms * Number(hotel.pricePerRoom || 0) * Number(hotel.nights || 1)
+  }, 0)
+
+  return tourDaysCost + hotelsCost
+}
+
+const calculateMarginAmount = () => {
+  return calculateBaseCost() * (Number(estimate.value.groupData.marginPercent || 0) / 100)
+}
+
+const calculateFinalCost = () => {
+  return calculateBaseCost() + calculateMarginAmount()
+}
+
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: estimate.value.currency,
+  }).format(amount || 0)
+}
+
+// Сохранение сметы
+const saveEstimate = async () => {
+  try {
+    isSaving.value = true
+
+    // Валидация
+    if (!estimate.value.name) {
+      errors.value.name = 'Название сметы обязательно'
+      return
     }
-  },
-)
+
+    if (!estimate.value.location.country) {
+      errors.value.location = { country: 'Выберите страну' }
+      return
+    }
+
+    // Создание объекта сметы для сохранения
+    const estimateData = {
+      ...estimate.value,
+      totalCost: calculateFinalCost(),
+      baseCost: calculateBaseCost(),
+      marginAmount: calculateMarginAmount(),
+      createdAt: new Date().toISOString(),
+      status: 'draft',
+    }
+
+    // Сохранение через store
+    await estimateStore.createEstimate(estimateData)
+
+    toastStore.showSuccess('Смета успешно создана!')
+    router.push('/estimates')
+  } catch (error) {
+    console.error('Error saving estimate:', error)
+    toastStore.showError('Ошибка при сохранении сметы')
+  } finally {
+    isSaving.value = false
+  }
+}
 
 // Lifecycle
 onMounted(() => {
   startAutoSave()
-
-  // Устанавливаем дату по умолчанию на завтра
-  const tomorrow = new Date()
-  tomorrow.setDate(tomorrow.getDate() + 1)
-  estimate.value.startDate = format(tomorrow, 'yyyy-MM-dd')
 })
 
 onUnmounted(() => {
-  if (autoSaveInterval) {
-    clearInterval(autoSaveInterval)
-  }
+  stopAutoSave()
 })
 </script>

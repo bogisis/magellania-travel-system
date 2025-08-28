@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { db } from '@/services/database.js'
+import { apiService } from '@/services/apiService.js'
 
 export const useClientsStore = defineStore('clients', () => {
   const clients = ref([])
@@ -10,8 +10,8 @@ export const useClientsStore = defineStore('clients', () => {
   // Computed свойства
   const clientsByType = computed(() => {
     return {
-      b2c: clients.value.filter(client => client.type === 'b2c'),
-      b2b: clients.value.filter(client => client.type === 'b2b')
+      b2c: clients.value.filter((client) => client.type === 'b2c'),
+      b2b: clients.value.filter((client) => client.type === 'b2b'),
     }
   })
 
@@ -26,20 +26,20 @@ export const useClientsStore = defineStore('clients', () => {
   })
 
   const totalClients = computed(() => clients.value.length)
-  const newClientsCount = computed(() => 
-    clients.value.filter(client => client.segment === 'new').length
+  const newClientsCount = computed(
+    () => clients.value.filter((client) => client.segment === 'new').length,
   )
 
   // Действия
   async function fetchClients() {
     loading.value = true
     error.value = null
-    
+
     try {
-      clients.value = await db.clients.orderBy('createdAt').reverse().toArray()
+      clients.value = await apiService.getClients()
     } catch (err) {
       error.value = 'Ошибка загрузки клиентов'
-      console.error(err)
+      console.error('Error: Не удалось получить клиентов:', err.message)
     } finally {
       loading.value = false
     }
@@ -47,16 +47,14 @@ export const useClientsStore = defineStore('clients', () => {
 
   async function createClient(clientData) {
     loading.value = true
-    
+
     try {
-      const clientId = await db.clients.add(clientData)
-      const newClient = await db.clients.get(clientId)
-      
+      const newClient = await apiService.createClient(clientData)
       clients.value.unshift(newClient)
-      return clientId
+      return newClient.id
     } catch (err) {
       error.value = 'Ошибка создания клиента'
-      console.error(err)
+      console.error('Error: Не удалось создать клиента:', err.message)
       throw err
     } finally {
       loading.value = false
@@ -65,36 +63,40 @@ export const useClientsStore = defineStore('clients', () => {
 
   async function updateClient(id, updates) {
     try {
-      await db.clients.update(id, updates)
-      
-      const index = clients.value.findIndex(client => client.id === id)
+      const updatedClient = await apiService.updateClient(id, updates)
+
+      const index = clients.value.findIndex((client) => client.id === id)
       if (index !== -1) {
-        clients.value[index] = { ...clients.value[index], ...updates }
+        clients.value[index] = updatedClient
       }
     } catch (err) {
       error.value = 'Ошибка обновления клиента'
-      console.error(err)
+      console.error('Error: Не удалось обновить клиента:', err.message)
       throw err
     }
   }
 
   async function deleteClient(id) {
     try {
-      await db.clients.delete(id)
-      clients.value = clients.value.filter(client => client.id !== id)
+      await apiService.deleteClient(id)
+      clients.value = clients.value.filter((client) => client.id !== id)
     } catch (err) {
       error.value = 'Ошибка удаления клиента'
-      console.error(err)
+      console.error('Error: Не удалось удалить клиента:', err.message)
       throw err
     }
   }
 
   async function searchClients(query) {
     try {
-      return await db.searchClients(query)
+      // Простой поиск по имени клиента
+      const allClients = await apiService.getClients()
+      return allClients.filter(
+        (client) => client.name && client.name.toLowerCase().includes(query.toLowerCase()),
+      )
     } catch (err) {
       error.value = 'Ошибка поиска клиентов'
-      console.error(err)
+      console.error('Error: Не удалось найти клиентов:', err.message)
       return []
     }
   }
@@ -104,18 +106,18 @@ export const useClientsStore = defineStore('clients', () => {
     clients,
     loading,
     error,
-    
+
     // Getters
     clientsByType,
     clientsBySegment,
     totalClients,
     newClientsCount,
-    
+
     // Actions
     fetchClients,
     createClient,
     updateClient,
     deleteClient,
-    searchClients
+    searchClients,
   }
 })

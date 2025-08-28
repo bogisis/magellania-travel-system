@@ -199,8 +199,15 @@ function formatCurrency(amount) {
 }
 
 function formatDate(date) {
-  if (!date) return ''
-  return format(new Date(date), 'dd.MM.yyyy', { locale: ru })
+  if (!date) return 'Н/Д'
+  try {
+    const dateObj = new Date(date)
+    if (isNaN(dateObj.getTime())) return 'Н/Д'
+    return format(dateObj, 'dd.MM.yyyy', { locale: ru })
+  } catch (error) {
+    console.warn('Error formatting date:', date, error)
+    return 'Н/Д'
+  }
 }
 
 function getStatusClasses(status) {
@@ -259,6 +266,6 @@ function openImportModal() {
 
 // Lifecycle
 onMounted(async () => {
-  await estimatesStore.fetchEstimates()
+  await estimatesStore.loadEstimates()
 })
 </script>

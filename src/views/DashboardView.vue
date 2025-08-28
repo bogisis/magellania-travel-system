@@ -395,7 +395,15 @@ function formatCurrency(amount) {
 }
 
 function formatDate(date) {
-  return format(new Date(date), 'dd MMM', { locale: ru })
+  if (!date) return 'Н/Д'
+  try {
+    const dateObj = new Date(date)
+    if (isNaN(dateObj.getTime())) return 'Н/Д'
+    return format(dateObj, 'dd MMM', { locale: ru })
+  } catch (error) {
+    console.warn('Error formatting date:', date, error)
+    return 'Н/Д'
+  }
 }
 
 function getStatusClasses(status) {
@@ -543,7 +551,7 @@ function createSalesChart() {
 onMounted(async () => {
   // Загружаем данные
   await Promise.all([
-    estimatesStore.fetchEstimates(),
+    estimatesStore.loadEstimates(),
     clientsStore.fetchClients(),
     analyticsStore.fetchDashboardStats(),
   ])

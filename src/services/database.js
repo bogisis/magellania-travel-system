@@ -187,6 +187,16 @@ class MagellaniaDatabase extends Dexie {
   }
 
   // Методы для работы с сметами
+  async getAllEstimates() {
+    try {
+      const estimates = await this.estimates.orderBy('createdAt').reverse().toArray()
+      return estimates
+    } catch (error) {
+      console.error('Ошибка получения всех смет:', error)
+      throw new Error(`Не удалось получить сметы: ${error.message}`)
+    }
+  }
+
   async getEstimateWithDetails(estimateId) {
     try {
       const estimate = await this.estimates.get(estimateId)

@@ -25,7 +25,7 @@ const router = createRouter({
     {
       path: '/estimates/create',
       name: 'estimate-create',
-      component: () => import('@/views/EstimateCreateView.vue'),
+      component: () => import('@/pages/EstimateCreatorPage.vue'),
       meta: {
         title: 'Создание сметы',
         requiresAuth: false,
@@ -34,7 +34,7 @@ const router = createRouter({
     {
       path: '/estimates/:id/edit',
       name: 'estimate-edit',
-      component: () => import('@/views/EstimateEditView.vue'),
+      component: () => import('@/pages/EstimateCreatorPage.vue'),
       props: true,
       meta: {
         title: 'Редактирование сметы',
@@ -102,6 +102,15 @@ const router = createRouter({
       component: () => import('@/views/DatabaseMigrationView.vue'),
       meta: {
         title: 'Миграция базы данных',
+        requiresAuth: false,
+      },
+    },
+    {
+      path: '/test-estimate',
+      name: 'test-estimate',
+      component: () => import('@/pages/TestEstimatePage.vue'),
+      meta: {
+        title: 'Тестирование смет',
         requiresAuth: false,
       },
     },
