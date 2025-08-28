@@ -1,114 +1,379 @@
 <!-- src/components/common/ToastContainer.vue -->
 <template>
-  <div class="fixed top-4 right-4 z-50 space-y-4">
-    <TransitionGroup
-      enter-active-class="transform ease-out duration-300 transition"
-      enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
-      enter-to-class="translate-y-0 opacity-100 sm:translate-x-0"
-      leave-active-class="transition ease-in duration-100"
-      leave-from-class="opacity-100"
-      leave-to-class="opacity-0"
+  <Teleport to="body">
+    <div 
+      v-if="hasToasts" 
+      class="toast-container"
+      aria-live="polite"
+      aria-atomic="true"
     >
-      <div v-for="toast in toasts" :key="toast.id" :class="toastClasses(toast.type)">
-        <div class="flex">
-          <div class="flex-shrink-0">
-            <component :is="getIcon(toast.type)" :class="iconClasses(toast.type)" />
+      <TransitionGroup 
+        name="toast" 
+        tag="div" 
+        class="toast-list"
+      >
+        <div
+          v-for="toast in activeToasts"
+          :key="toast.id"
+          :class="[
+            'toast',
+            `toast--${toast.type}`,
+            { 'toast--removing': toast.isRemoved }
+          ]"
+          role="alert"
+          :aria-label="`${toast.type} notification: ${toast.title}`"
+        >
+          <!-- Иконка -->
+          <div class="toast__icon">
+            <Icon 
+              :name="getIconName(toast.type)" 
+              :class="`toast__icon--${toast.type}`"
+            />
           </div>
-          <div class="ml-3 w-0 flex-1 pt-0.5">
-            <p class="text-sm font-medium text-gray-900">
+
+          <!-- Контент -->
+          <div class="toast__content">
+            <h4 v-if="toast.title" class="toast__title">
               {{ toast.title }}
-            </p>
-            <p v-if="toast.message" class="mt-1 text-sm text-gray-500">
+            </h4>
+            <p v-if="toast.message" class="toast__message">
               {{ toast.message }}
             </p>
           </div>
-          <div class="ml-4 flex-shrink-0 flex">
+
+          <!-- Действия -->
+          <div v-if="toast.actions && toast.actions.length > 0" class="toast__actions">
             <button
-              @click="removeToast(toast.id)"
-              class="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+              v-for="action in toast.actions"
+              :key="action.label"
+              @click="handleAction(toast, action)"
+              class="toast__action"
+              :class="`toast__action--${toast.type}`"
             >
-              <X class="h-5 w-5" />
+              {{ action.label }}
             </button>
           </div>
+
+          <!-- Кнопка закрытия -->
+          <button
+            v-if="toast.duration === 0"
+            @click="removeToast(toast.id)"
+            class="toast__close"
+            aria-label="Закрыть уведомление"
+          >
+            <Icon name="x" />
+          </button>
+
+          <!-- Прогресс-бар для автоматического закрытия -->
+          <div 
+            v-if="toast.duration > 0" 
+            class="toast__progress"
+            :style="{ animationDuration: `${toast.duration}ms` }"
+          />
         </div>
-      </div>
-    </TransitionGroup>
-  </div>
+      </TransitionGroup>
+    </div>
+  </Teleport>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { CheckCircle, AlertCircle, XCircle, Info, X } from 'lucide-vue-next'
+import { computed } from 'vue'
+import { useToastStore } from '@/stores/toastStore'
+import Icon from '@/components/common/Icon.vue'
 
-const toasts = ref([])
+const toastStore = useToastStore()
 
-const toastClasses = (type) => {
-  const base =
-    'max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden'
-  const borders = {
-    success: 'border-l-4 border-green-400',
-    error: 'border-l-4 border-red-400',
-    warning: 'border-l-4 border-yellow-400',
-    info: 'border-l-4 border-blue-400',
-  }
+// Вычисляемые свойства
+const hasToasts = computed(() => toastStore.hasToasts)
+const activeToasts = computed(() => toastStore.activeToasts)
 
-  return `${base} ${borders[type] || borders.info} p-4`
+// Методы
+const removeToast = (toastId) => {
+  toastStore.removeToast(toastId)
 }
 
-const iconClasses = (type) => {
-  const colors = {
-    success: 'text-green-400',
-    error: 'text-red-400',
-    warning: 'text-yellow-400',
-    info: 'text-blue-400',
+const handleAction = (toast, action) => {
+  if (action.action && typeof action.action === 'function') {
+    action.action()
   }
-
-  return `h-6 w-6 ${colors[type] || colors.info}`
+  removeToast(toast.id)
 }
 
-const getIcon = (type) => {
+const getIconName = (type) => {
   const icons = {
-    success: CheckCircle,
-    error: XCircle,
-    warning: AlertCircle,
-    info: Info,
+    success: 'check-circle',
+    error: 'x-circle',
+    warning: 'alert-triangle',
+    info: 'info',
+    loading: 'loader-2'
   }
-
-  return icons[type] || icons.info
+  return icons[type] || 'info'
 }
-
-function addToast(toast) {
-  const id = Math.random().toString(36).substr(2, 9)
-  const newToast = { ...toast, id }
-
-  toasts.value.push(newToast)
-
-  // Автоматическое удаление через 5 секунд
-  setTimeout(() => {
-    removeToast(id)
-  }, toast.duration || 5000)
-
-  return id
-}
-
-function removeToast(id) {
-  const index = toasts.value.findIndex((toast) => toast.id === id)
-  if (index > -1) {
-    toasts.value.splice(index, 1)
-  }
-}
-
-// Глобальные методы для уведомлений
-window.$toast = {
-  success: (title, message) => addToast({ type: 'success', title, message }),
-  error: (title, message) => addToast({ type: 'error', title, message }),
-  warning: (title, message) => addToast({ type: 'warning', title, message }),
-  info: (title, message) => addToast({ type: 'info', title, message }),
-}
-
-onMounted(() => {
-  // Экспортируем методы для использования в других компонентах
-  window.addToast = addToast
-  window.removeToast = removeToast
-})
 </script>
+
+<style scoped>
+.toast-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.toast-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  pointer-events: auto;
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+  min-width: 320px;
+  max-width: 480px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.toast--success {
+  border-left: 4px solid #10b981;
+}
+
+.toast--error {
+  border-left: 4px solid #ef4444;
+}
+
+.toast--warning {
+  border-left: 4px solid #f59e0b;
+}
+
+.toast--info {
+  border-left: 4px solid #3b82f6;
+}
+
+.toast--loading {
+  border-left: 4px solid #8b5cf6;
+}
+
+.toast--removing {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
+.toast__icon {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toast__icon--success {
+  color: #10b981;
+}
+
+.toast__icon--error {
+  color: #ef4444;
+}
+
+.toast__icon--warning {
+  color: #f59e0b;
+}
+
+.toast__icon--info {
+  color: #3b82f6;
+}
+
+.toast__icon--loading {
+  color: #8b5cf6;
+  animation: spin 1s linear infinite;
+}
+
+.toast__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.toast__title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.25rem 0;
+  line-height: 1.25;
+}
+
+.toast__message {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.toast__actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.toast__action {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+}
+
+.toast__action--success {
+  color: #10b981;
+  border-color: #10b981;
+}
+
+.toast__action--success:hover {
+  background: #10b981;
+  color: white;
+}
+
+.toast__action--error {
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+.toast__action--error:hover {
+  background: #ef4444;
+  color: white;
+}
+
+.toast__action--warning {
+  color: #f59e0b;
+  border-color: #f59e0b;
+}
+
+.toast__action--warning:hover {
+  background: #f59e0b;
+  color: white;
+}
+
+.toast__action--info {
+  color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.toast__action--info:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+.toast__close {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 0.25rem;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toast__close:hover {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.toast__progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: #e5e7eb;
+  animation: progress linear forwards;
+}
+
+.toast--success .toast__progress {
+  background: #10b981;
+}
+
+.toast--error .toast__progress {
+  background: #ef4444;
+}
+
+.toast--warning .toast__progress {
+  background: #f59e0b;
+}
+
+.toast--info .toast__progress {
+  background: #3b82f6;
+}
+
+.toast--loading .toast__progress {
+  background: #8b5cf6;
+}
+
+/* Анимации */
+@keyframes progress {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Анимации появления/исчезновения */
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.3s ease;
+}
+
+.toast-enter-from {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
+.toast-leave-to {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
+.toast-move {
+  transition: transform 0.3s ease;
+}
+
+/* Адаптивность */
+@media (max-width: 640px) {
+  .toast-container {
+    top: 0.5rem;
+    right: 0.5rem;
+    left: 0.5rem;
+  }
+
+  .toast {
+    min-width: auto;
+    max-width: none;
+  }
+}
+</style>

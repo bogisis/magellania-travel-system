@@ -3,6 +3,8 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import router from './router'
 import { initializeDatabase } from './services/database.js'
+import { ErrorHandler } from './services/errorHandler.js'
+import ToastContainer from './components/common/ToastContainer.vue'
 
 import App from './App.vue'
 import './style.css'
@@ -13,10 +15,13 @@ const errorHandler = (error, instance, info) => {
   console.error('Component:', instance)
   console.error('Info:', info)
 
-  // Отправка ошибки в toast, если доступен
-  if (window.$toast) {
-    window.$toast.error('Ошибка приложения', 'Произошла неожиданная ошибка')
-  }
+  // Обрабатываем ошибку через централизованную систему
+  ErrorHandler.handle(error, 'vue-error', {
+    additionalData: {
+      component: instance?.$options?.name || 'unknown',
+      info,
+    },
+  })
 }
 
 // Создание приложения
@@ -44,6 +49,10 @@ app.config.globalProperties.$formatDate = (date, options = {}) => {
   })
 }
 
+// Глобальные методы для обработки ошибок
+app.config.globalProperties.$handleError = ErrorHandler.handle
+app.config.globalProperties.$createError = ErrorHandler.createError
+
 // Инициализация приложения
 async function initApp() {
   try {
@@ -58,6 +67,11 @@ async function initApp() {
     console.log('✅ Приложение запущено успешно')
   } catch (error) {
     console.error('❌ Ошибка инициализации приложения:', error)
+
+    // Обрабатываем ошибку через централизованную систему
+    ErrorHandler.handle(error, 'app-init', {
+      severity: 'critical',
+    })
 
     // Показываем ошибку пользователю
     document.getElementById('app').innerHTML = `

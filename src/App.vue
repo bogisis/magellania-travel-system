@@ -185,6 +185,7 @@ import {
   Building,
   DollarSign,
   PieChart,
+  Home,
 } from 'lucide-vue-next'
 import ToastContainer from '@/components/common/ToastContainer.vue'
 
@@ -229,7 +230,13 @@ const currentPageTitle = computed(() => {
 })
 
 const breadcrumbs = computed(() => {
-  const crumbs = [{ name: 'Главная', path: '/', icon: 'Home' }]
+  const crumbs = [{ name: 'Главная', path: '/', icon: Home }]
+
+  // Добавляем текущую страницу
+  const currentNav = navigation.find((nav) => nav.path === route.path)
+  if (currentNav && route.path !== '/') {
+    crumbs.push({ name: currentNav.name, path: route.path, icon: currentNav.icon })
+  }
 
   // Добавляем дополнительные крошки для детальных страниц
   if (route.name === 'estimate-create') {
@@ -278,6 +285,3 @@ nav[aria-label='Breadcrumb'] li:not(:last-child)::after {
   @apply mx-1 text-gray-400;
 }
 </style>
-Добавляем текущую страницу const currentNav = navigation.find(nav => nav.path === route.path) if
-(currentNav && route.path !== '/') { crumbs.push({ name: currentNav.name, path: route.path, icon:
-currentNav.icon }) } //
