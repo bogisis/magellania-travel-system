@@ -540,12 +540,15 @@ describe('useEstimateContext', () => {
   })
 
   describe('Validation', () => {
-    it('should call ValidationService.validateEstimate', () => {
+    it('should call ValidationService.validateEstimate', async () => {
       const context = provideEstimateContext(estimateData)
+
+      // Mock ValidationService
+      const { ValidationService } = await import('@/services/ValidationService.js')
+      vi.spyOn(ValidationService, 'validateEstimate').mockReturnValue([])
 
       context.validate()
 
-      const { ValidationService } = require('@/services/ValidationService.js')
       expect(ValidationService.validateEstimate).toHaveBeenCalledWith(estimateData)
     })
   })

@@ -13,6 +13,11 @@
       </p>
     </div>
 
+    <!-- Переключатель режима отображения -->
+    <div class="mb-6">
+      <DisplayModeToggle v-model="displayMode" @change="handleDisplayModeChange" :showInfo="true" />
+    </div>
+
     <!-- Информация о группе -->
     <div class="mb-6 p-4 bg-gray-50 rounded-lg">
       <h2 class="text-lg font-semibold text-gray-900 mb-3">Информация о группе</h2>
@@ -81,7 +86,7 @@
                   <span class="text-sm font-medium">{{ activity.name }}</span>
                 </div>
                 <span class="text-sm font-medium text-gray-900">
-                  {{ formatCurrency(activity.cost) }}
+                  {{ formatCurrency(getActivityPrice(activity)) }}
                 </span>
               </div>
             </div>
@@ -90,7 +95,7 @@
             <div class="mt-3 pt-2 border-t border-gray-200">
               <div class="flex justify-between text-sm">
                 <span class="font-medium">Итого за день:</span>
-                <span class="font-bold">{{ formatCurrency(calculateDayTotal(day)) }}</span>
+                <span class="font-bold">{{ formatCurrency(calculateDayTotalDual(day)) }}</span>
               </div>
             </div>
           </div>
@@ -141,7 +146,7 @@
 
           <div class="flex justify-between text-sm font-bold mt-2 pt-2 border-t border-gray-200">
             <span>Итого за гостиницу:</span>
-            <span>{{ formatCurrency(calculateHotelTotal(hotel)) }}</span>
+            <span>{{ formatCurrency(calculateHotelTotalDual(hotel)) }}</span>
           </div>
 
           <div v-if="hotel.isGuideHotel" class="mt-2 text-xs text-orange-600">
@@ -156,42 +161,51 @@
       <h2 class="text-lg font-semibold text-gray-900 mb-4">Итоговый расчет</h2>
 
       <div class="space-y-3">
-        <div class="flex justify-between text-sm">
-          <span class="text-gray-600">Стоимость гостиниц:</span>
-          <span class="font-medium">{{ formatCurrency(hotelsCost) }}</span>
+        <!-- Категории с подитогами -->
+        <div v-if="estimateCalculation.category_subtotals" class="space-y-2">
+          <div
+            v-for="(subtotal, category) in estimateCalculation.category_subtotals"
+            :key="category"
+            class="flex justify-between text-sm"
+          >
+            <span class="text-gray-600">{{ getCategoryLabel(category) }}:</span>
+            <span class="font-medium">{{ formatCurrency(subtotal.display_total) }}</span>
+          </div>
         </div>
 
-        <div class="flex justify-between text-sm">
-          <span class="text-gray-600">Стоимость активностей:</span>
-          <span class="font-medium">{{ formatCurrency(activitiesCost) }}</span>
-        </div>
-
-        <div class="flex justify-between text-sm">
-          <span class="text-gray-600">Опциональные услуги:</span>
-          <span class="font-medium">{{ formatCurrency(optionalServicesCost) }}</span>
-        </div>
-
+        <!-- Базовая стоимость -->
         <div class="border-t border-gray-200 pt-2">
           <div class="flex justify-between text-base font-semibold">
             <span>Базовая стоимость:</span>
-            <span>{{ formatCurrency(baseCost) }}</span>
+            <span>{{ formatCurrency(estimateCalculation.base_total) }}</span>
           </div>
         </div>
 
-        <div v-if="estimate.markup > 0" class="flex justify-between text-sm">
-          <span class="text-gray-600">Наценка ({{ estimate.markup }}%):</span>
-          <span class="font-medium">{{ formatCurrency(markupAmount) }}</span>
+        <!-- Наценка -->
+        <div
+          v-if="estimateCalculation.general_markup_amount > 0"
+          class="flex justify-between text-sm"
+        >
+          <span class="text-gray-600"
+            >Наценка ({{ estimate.group?.markup || estimate.markup }}%):</span
+          >
+          <span class="font-medium">{{
+            formatCurrency(estimateCalculation.general_markup_amount)
+          }}</span>
         </div>
 
+        <!-- Финальная стоимость -->
         <div class="border-t border-gray-200 pt-2">
           <div class="flex justify-between text-lg font-bold text-primary-600">
             <span>ИТОГО:</span>
-            <span>{{ formatCurrency(finalCost) }}</span>
+            <span>{{ formatCurrency(estimateCalculation.final_total) }}</span>
           </div>
         </div>
 
-        <div v-if="estimate.markup > 0" class="text-xs text-gray-500 mt-2">
-          * Комиссия агентства: {{ formatCurrency(commissionAmount) }}
+        <!-- Информация о режиме отображения -->
+        <div class="text-xs text-gray-500 mt-2">
+          <span v-if="displayMode === 'WITHOUT_MARKUP'"> * Показаны базовые цены без наценок </span>
+          <span v-else> * Показаны финальные цены с наценками </span>
         </div>
       </div>
     </div>
@@ -210,9 +224,11 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { format, addDays } from 'date-fns'
 import { ru } from 'date-fns/locale'
+import DisplayModeToggle from '../common/DisplayModeToggle.vue'
+import { CalculationEngine } from '@/services/CalculationEngine.js'
 
 // Props
 const props = defineProps({
@@ -222,48 +238,12 @@ const props = defineProps({
   },
 })
 
+// Reactive data
+const displayMode = ref('WITH_MARKUP')
+
 // Computed
-const baseCost = computed(() => {
-  const hotelsCost =
-    props.estimate.hotels
-      ?.filter((hotel) => !hotel.isGuideHotel)
-      .reduce((sum, hotel) => sum + calculateHotelTotal(hotel), 0) || 0
-
-  const activitiesCost =
-    props.estimate.tourDays?.reduce((sum, day) => sum + calculateDayTotal(day), 0) || 0
-
-  const optionalServicesCost =
-    props.estimate.optionalServices?.reduce((sum, service) => sum + service.price, 0) || 0
-
-  return hotelsCost + activitiesCost + optionalServicesCost
-})
-
-const markupAmount = computed(() => {
-  return (baseCost.value * Number(props.estimate.markup || 0)) / 100
-})
-
-const finalCost = computed(() => {
-  return baseCost.value + markupAmount.value
-})
-
-const commissionAmount = computed(() => {
-  return markupAmount.value
-})
-
-const hotelsCost = computed(() => {
-  return (
-    props.estimate.hotels
-      ?.filter((hotel) => !hotel.isGuideHotel)
-      .reduce((sum, hotel) => sum + calculateHotelTotal(hotel), 0) || 0
-  )
-})
-
-const activitiesCost = computed(() => {
-  return props.estimate.tourDays?.reduce((sum, day) => sum + calculateDayTotal(day), 0) || 0
-})
-
-const optionalServicesCost = computed(() => {
-  return props.estimate.optionalServices?.reduce((sum, service) => sum + service.price, 0) || 0
+const estimateCalculation = computed(() => {
+  return CalculationEngine.calculateEstimateTotalDual(props.estimate, displayMode.value)
 })
 
 const validUntilDate = computed(() => {
@@ -271,11 +251,58 @@ const validUntilDate = computed(() => {
 })
 
 // Methods
+const handleDisplayModeChange = (mode) => {
+  displayMode.value = mode
+}
+
+const getActivityPrice = (activity) => {
+  const participantCount = props.estimate.group?.totalPax || 1
+  const calculation = CalculationEngine.calculateActivityPriceDual(
+    activity,
+    participantCount,
+    displayMode.value,
+  )
+  return calculation.display_price
+}
+
+const calculateDayTotalDual = (day) => {
+  return CalculationEngine.calculateDayTotalDual(day, displayMode.value)
+}
+
+const calculateHotelTotalDual = (hotel) => {
+  const participantCount = props.estimate.group?.totalPax || 1
+  return CalculationEngine.calculateAccommodationTotalDual(
+    hotel,
+    participantCount,
+    displayMode.value,
+  )
+}
+
+const getCategoryLabel = (category) => {
+  const labels = {
+    accommodation: 'Размещение',
+    activities: 'Активности',
+    transport: 'Транспорт',
+    flights: 'Перелеты',
+    guides: 'Гиды',
+    optional: 'Опциональные услуги',
+  }
+  return labels[category] || category
+}
 function formatDate(dateString) {
   if (!dateString) return 'Не указана'
   try {
-    return format(new Date(dateString), 'dd MMMM yyyy', { locale: ru })
-  } catch {
+    // Проверяем, является ли dateString уже датой
+    const date = dateString instanceof Date ? dateString : new Date(dateString)
+
+    // Проверяем, что дата валидна
+    if (isNaN(date.getTime())) {
+      return dateString
+    }
+
+    return format(date, 'dd MMMM yyyy', { locale: ru })
+  } catch (error) {
+    console.warn('Ошибка форматирования даты:', error, 'dateString:', dateString)
     return dateString
   }
 }
@@ -283,8 +310,17 @@ function formatDate(dateString) {
 function formatDateTime(dateString) {
   if (!dateString) return 'Не указана'
   try {
-    return format(new Date(dateString), 'dd.MM.yyyy HH:mm', { locale: ru })
-  } catch {
+    // Проверяем, является ли dateString уже датой
+    const date = dateString instanceof Date ? dateString : new Date(dateString)
+
+    // Проверяем, что дата валидна
+    if (isNaN(date.getTime())) {
+      return dateString
+    }
+
+    return format(date, 'dd.MM.yyyy HH:mm', { locale: ru })
+  } catch (error) {
+    console.warn('Ошибка форматирования даты и времени:', error, 'dateString:', dateString)
     return dateString
   }
 }
@@ -297,8 +333,6 @@ function formatCurrency(amount) {
 }
 
 import { CalculationService } from '@/services/CalculationService.js'
-
-// ... existing code ...
 
 function calculateDayTotal(day) {
   return CalculationService.calculateDayTotal(day)

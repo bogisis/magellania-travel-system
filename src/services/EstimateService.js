@@ -17,10 +17,10 @@ export class EstimateService {
 
     // Подготовка данных для сохранения
     const preparedData = this.prepareEstimateData(estimateData)
-    
+
     // Автоматический расчет стоимости
     const calculatedData = this.calculateEstimateCosts(preparedData)
-    
+
     return calculatedData
   }
 
@@ -28,18 +28,18 @@ export class EstimateService {
    * Обновление сметы с валидацией и пересчетом
    */
   static async update(estimateId, updates) {
-    // Валидация обновлений
-    const validationResult = ValidationService.validateEstimateUpdate(updates)
+    // Подготовка данных для обновления с автоматическим заполнением
+    const preparedUpdates = this.prepareEstimateData(updates)
+
+    // Валидация подготовленных данных
+    const validationResult = ValidationService.validateEstimateUpdate(preparedUpdates)
     if (!validationResult.isValid) {
       throw new Error(`Validation failed: ${validationResult.errors.join(', ')}`)
     }
 
-    // Подготовка данных для обновления
-    const preparedUpdates = this.prepareEstimateData(updates)
-    
     // Пересчет стоимости
     const calculatedUpdates = this.calculateEstimateCosts(preparedUpdates)
-    
+
     return { id: estimateId, ...calculatedUpdates }
   }
 
@@ -47,20 +47,37 @@ export class EstimateService {
    * Подготовка данных сметы для сохранения
    */
   static prepareEstimateData(data) {
+    // Генерируем уникальное название для новой сметы
+    const generateDefaultName = () => {
+      const timestamp = new Date().toLocaleString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+      return `Смета ${timestamp}`
+    }
+
+    const name = data.name || data.title || generateDefaultName()
+    const title = data.title || data.name || generateDefaultName()
+
     return {
-      name: data.name || data.title || 'Новая смета',
-      tourName: data.tourName || data.title || 'Новый тур',
+      name,
+      title,
+      tourName: data.tourName || title || 'Новый тур',
       client: data.client || '',
       description: data.description || '',
       location: this.prepareLocationData(data.location),
       tourDates: this.prepareTourDatesData(data.tourDates),
       group: this.prepareGroupData(data.group),
+      flights: this.prepareFlightsData(data.flights),
       hotels: this.prepareHotelsData(data.hotels),
       tourDays: this.prepareTourDaysData(data.tourDays),
       optionalServices: this.prepareOptionalServicesData(data.optionalServices),
       markup: Number(data.markup) || 0,
       currency: data.currency || 'USD',
-      status: data.status || 'draft'
+      status: data.status || 'draft',
     }
   }
 
@@ -76,7 +93,7 @@ export class EstimateService {
       ...estimateData,
       baseCost: Math.round(baseCost * 100) / 100,
       markupAmount: Math.round(markupAmount * 100) / 100,
-      totalPrice: Math.round(finalCost * 100) / 100
+      totalPrice: Math.round(finalCost * 100) / 100,
     }
   }
 
@@ -90,7 +107,7 @@ export class EstimateService {
         regions: [],
         cities: [],
         startPoint: '',
-        endPoint: ''
+        endPoint: '',
       }
     }
 
@@ -99,7 +116,7 @@ export class EstimateService {
       regions: Array.isArray(location.regions) ? location.regions : [],
       cities: Array.isArray(location.cities) ? location.cities : [],
       startPoint: location.startPoint || '',
-      endPoint: location.endPoint || ''
+      endPoint: location.endPoint || '',
     }
   }
 
@@ -112,7 +129,7 @@ export class EstimateService {
         dateType: 'exact',
         startDate: '',
         endDate: '',
-        days: 0
+        days: 0,
       }
     }
 
@@ -120,7 +137,7 @@ export class EstimateService {
       dateType: tourDates.dateType || 'exact',
       startDate: tourDates.startDate || '',
       endDate: tourDates.endDate || '',
-      days: Number(tourDates.days) || 0
+      days: Number(tourDates.days) || 0,
     }
   }
 
@@ -134,7 +151,7 @@ export class EstimateService {
         doubleCount: 0,
         singleCount: 0,
         guidesCount: 0,
-        markup: 0
+        markup: 0,
       }
     }
 
@@ -143,7 +160,7 @@ export class EstimateService {
       doubleCount: Number(group.doubleCount) || 0,
       singleCount: Number(group.singleCount) || 0,
       guidesCount: Number(group.guidesCount) || 0,
-      markup: Number(group.markup) || 0
+      markup: Number(group.markup) || 0,
     }
   }
 
@@ -153,7 +170,7 @@ export class EstimateService {
   static prepareHotelsData(hotels) {
     if (!Array.isArray(hotels)) return []
 
-    return hotels.map(hotel => ({
+    return hotels.map((hotel) => ({
       name: hotel.name || '',
       city: hotel.city || '',
       region: hotel.region || '',
@@ -162,7 +179,7 @@ export class EstimateService {
       pricePerRoom: Number(hotel.pricePerRoom) || 0,
       nights: Number(hotel.nights) || 1,
       isGuideHotel: Boolean(hotel.isGuideHotel),
-      description: hotel.description || ''
+      description: hotel.description || '',
     }))
   }
 
@@ -172,15 +189,42 @@ export class EstimateService {
   static prepareTourDaysData(tourDays) {
     if (!Array.isArray(tourDays)) return []
 
-    return tourDays.map(day => ({
+    return tourDays.map((day) => ({
       city: day.city || '',
-      activities: Array.isArray(day.activities) 
-        ? day.activities.map(activity => ({
+      activities: Array.isArray(day.activities)
+        ? day.activities.map((activity) => ({
             name: activity.name || '',
             cost: Number(activity.cost) || 0,
-            description: activity.description || ''
+            description: activity.description || '',
           }))
-        : []
+        : [],
+    }))
+  }
+
+  /**
+   * Подготовка данных рейсов
+   */
+  static prepareFlightsData(flights) {
+    if (!flights || !Array.isArray(flights)) {
+      return []
+    }
+
+    return flights.map((flight) => ({
+      id: flight.id || `flight_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      type: flight.type || 'DIRECT',
+      segments: flight.segments || [],
+      passengers: flight.passengers || { adult: 1, child: 0, infant: 0 },
+      cabinClass: flight.cabinClass || 'economy',
+      baggage: flight.baggage || { checked: 0, carryOn: 1 },
+      basePrice: Number(flight.basePrice || 0),
+      taxes: Number(flight.taxes || 0),
+      fees: Number(flight.fees || 0),
+      finalPrice: Number(flight.finalPrice || flight.totalPrice || 0),
+      totalDistance: Number(flight.totalDistance || 0),
+      totalDuration: Number(flight.totalDuration || 0),
+      totalConnections: Number(flight.totalConnections || 0),
+      airline: flight.airline || '',
+      notes: flight.notes || '',
     }))
   }
 
@@ -190,11 +234,11 @@ export class EstimateService {
   static prepareOptionalServicesData(optionalServices) {
     if (!Array.isArray(optionalServices)) return []
 
-    return optionalServices.map(service => ({
+    return optionalServices.map((service) => ({
       name: service.name || '',
       cost: Number(service.cost) || 0,
       description: service.description || '',
-      quantity: Number(service.quantity) || 1
+      quantity: Number(service.quantity) || 1,
     }))
   }
 
@@ -230,7 +274,7 @@ export class EstimateService {
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     }
   }
 
@@ -247,8 +291,8 @@ export class EstimateService {
           draft: 0,
           sent: 0,
           approved: 0,
-          rejected: 0
-        }
+          rejected: 0,
+        },
       }
     }
 
@@ -270,8 +314,8 @@ export class EstimateService {
         draft: byStatus.draft || 0,
         sent: byStatus.sent || 0,
         approved: byStatus.approved || 0,
-        rejected: byStatus.rejected || 0
-      }
+        rejected: byStatus.rejected || 0,
+      },
     }
   }
 }

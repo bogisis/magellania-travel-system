@@ -1,643 +1,628 @@
-// src/utils/comprehensiveMathTests.js
-// Комплексная система тестирования математических расчетов
+/**
+ * Comprehensive mathematical tests for MAGELLANIA calculation engine
+ *
+ * Tests all calculation types and scenarios based on real estimate analysis
+ */
 
-import { CalculationService } from '@/services/CalculationService.js'
+import { CalculationEngine } from '../services/CalculationEngine.js'
+import { PricingIntelligenceService } from '../services/PricingIntelligenceService.js'
 
 /**
- * Комплексная система тестирования математических расчетов
+ * Test data based on real estimates analysis
  */
-export class ComprehensiveMathTests {
-  /**
-   * Запуск всех тестов
-   */
-  static runAllTests() {
-    console.log('🧪 ЗАПУСК КОМПЛЕКСНОГО ТЕСТИРОВАНИЯ МАТЕМАТИЧЕСКИХ РАСЧЕТОВ')
-    console.log('='.repeat(80))
+export const testScenarios = {
+  // Сценарий 1: Входные билеты (per_person)
+  entranceTickets: {
+    name: 'Входные билеты в нац.парк',
+    activities: [
+      {
+        name: 'Входные билеты в нац.парк',
+        base_price: 44,
+        calculation_type: CalculationEngine.CALCULATION_TYPES.PER_PERSON,
+        markup: 10,
+      },
+    ],
+    participantCount: 5,
+    expectedBaseCost: 220, // 5 × $44
+    expectedWithMarkup: 242, // 220 + 10%
+  },
 
-    const results = {
-      total: 0,
-      passed: 0,
-      failed: 0,
-      errors: [],
-    }
-
-    // 1. Тесты базовых математических операций
-    results.total += 5
-    this.testBasicMathOperations(results)
-
-    // 2. Тесты расчета номеров
-    results.total += 6
-    this.testRoomCalculations(results)
-
-    // 3. Тесты расчета стоимости отелей
-    results.total += 8
-    this.testHotelCostCalculations(results)
-
-    // 4. Тесты расчета стоимости дней тура
-    results.total += 6
-    this.testTourDayCalculations(results)
-
-    // 5. Тесты расчета базовой стоимости
-    results.total += 4
-    this.testBaseCostCalculations(results)
-
-    // 6. Тесты расчета наценки
-    results.total += 4
-    this.testMarkupCalculations(results)
-
-    // 7. Тесты расчета финальной стоимости
-    results.total += 4
-    this.testFinalCostCalculations(results)
-
-    // 8. Тесты edge cases
-    results.total += 6
-    this.testEdgeCases(results)
-
-    // 9. Тесты валидации данных
-    results.total += 4
-    this.testDataValidation(results)
-
-    // Вывод результатов
-    this.printResults(results)
-
-    return results
-  }
-
-  /**
-   * Тесты базовых математических операций
-   */
-  static testBasicMathOperations(results) {
-    console.log('\n📊 Тест 1: Базовые математические операции')
-
-    try {
-      // Тест safeNumber
-      const test1 = CalculationService.safeNumber('100', 0) === 100
-      this.assert(test1, 'safeNumber с числовой строкой', results)
-
-      const test2 = CalculationService.safeNumber('abc', 0) === 0
-      this.assert(test2, 'safeNumber с нечисловой строкой', results)
-
-      const test3 = CalculationService.safeNumber(null, 50) === 50
-      this.assert(test3, 'safeNumber с null', results)
-
-      const test4 = CalculationService.safeNumber(undefined, 25) === 25
-      this.assert(test4, 'safeNumber с undefined', results)
-
-      const test5 = CalculationService.safeNumber(75, 0) === 75
-      this.assert(test5, 'safeNumber с числом', results)
-    } catch (error) {
-      this.handleError('Базовые математические операции', error, results)
-    }
-  }
-
-  /**
-   * Тесты расчета номеров
-   */
-  static testRoomCalculations(results) {
-    console.log('\n🏨 Тест 2: Расчет количества номеров')
-
-    try {
-      // Тест single
-      const hotel1 = { paxCount: 5, accommodationType: 'single' }
-      const test1 = CalculationService.calculateRooms(hotel1) === 5
-      this.assert(test1, 'Расчет номеров для single размещения', results)
-
-      // Тест double
-      const hotel2 = { paxCount: 6, accommodationType: 'double' }
-      const test2 = CalculationService.calculateRooms(hotel2) === 3
-      this.assert(test2, 'Расчет номеров для double размещения (четное)', results)
-
-      const hotel3 = { paxCount: 5, accommodationType: 'double' }
-      const test3 = CalculationService.calculateRooms(hotel3) === 3
-      this.assert(test3, 'Расчет номеров для double размещения (нечетное)', results)
-
-      // Тест triple
-      const hotel4 = { paxCount: 7, accommodationType: 'triple' }
-      const test4 = CalculationService.calculateRooms(hotel4) === 3
-      this.assert(test4, 'Расчет номеров для triple размещения', results)
-
-      // Тест с невалидными данными
-      const hotel5 = { paxCount: 'abc', accommodationType: 'double' }
-      const test5 = CalculationService.calculateRooms(hotel5) === 0
-      this.assert(test5, 'Расчет номеров с невалидными данными', results)
-
-      const hotel6 = { accommodationType: 'double' }
-      const test6 = CalculationService.calculateRooms(hotel6) === 0
-      this.assert(test6, 'Расчет номеров без paxCount', results)
-    } catch (error) {
-      this.handleError('Расчет количества номеров', error, results)
-    }
-  }
-
-  /**
-   * Тесты расчета стоимости отелей
-   */
-  static testHotelCostCalculations(results) {
-    console.log('\n💰 Тест 3: Расчет стоимости отелей')
-
-    try {
-      // Простой тест
-      const hotel1 = { paxCount: 2, accommodationType: 'double', pricePerRoom: 100, nights: 3 }
-      const expected1 = 1 * 100 * 3 // 1 номер * 100$ * 3 ночи
-      const test1 = CalculationService.calculateHotelTotal(hotel1) === expected1
-      this.assert(test1, 'Простой расчет стоимости отеля', results)
-
-      // Тест с single размещением
-      const hotel2 = { paxCount: 3, accommodationType: 'single', pricePerRoom: 80, nights: 2 }
-      const expected2 = 3 * 80 * 2 // 3 номера * 80$ * 2 ночи
-      const test2 = CalculationService.calculateHotelTotal(hotel2) === expected2
-      this.assert(test2, 'Расчет стоимости отеля с single размещением', results)
-
-      // Тест с triple размещением
-      const hotel3 = { paxCount: 9, accommodationType: 'triple', pricePerRoom: 120, nights: 4 }
-      const expected3 = 3 * 120 * 4 // 3 номера * 120$ * 4 ночи
-      const test3 = CalculationService.calculateHotelTotal(hotel3) === expected3
-      this.assert(test3, 'Расчет стоимости отеля с triple размещением', results)
-
-      // Тест с нечетным количеством туристов
-      const hotel4 = { paxCount: 7, accommodationType: 'double', pricePerRoom: 90, nights: 5 }
-      const expected4 = 4 * 90 * 5 // 4 номера * 90$ * 5 ночей
-      const test4 = CalculationService.calculateHotelTotal(hotel4) === expected4
-      this.assert(test4, 'Расчет стоимости отеля с нечетным количеством туристов', results)
-
-      // Тест с нулевыми значениями
-      const hotel5 = { paxCount: 0, accommodationType: 'double', pricePerRoom: 100, nights: 3 }
-      const test5 = CalculationService.calculateHotelTotal(hotel5) === 0
-      this.assert(test5, 'Расчет стоимости отеля с нулевым количеством туристов', results)
-
-      // Тест с отсутствующими данными
-      const hotel6 = { paxCount: 2, accommodationType: 'double' }
-      const test6 = CalculationService.calculateHotelTotal(hotel6) === 0
-      this.assert(test6, 'Расчет стоимости отеля без цены и ночей', results)
-
-      // Тест с отрицательными значениями
-      const hotel7 = { paxCount: 2, accommodationType: 'double', pricePerRoom: -50, nights: 3 }
-      const test7 = CalculationService.calculateHotelTotal(hotel7) === 0
-      this.assert(test7, 'Расчет стоимости отеля с отрицательной ценой', results)
-
-      // Тест с очень большими числами
-      const hotel8 = { paxCount: 100, accommodationType: 'double', pricePerRoom: 1000, nights: 30 }
-      const expected8 = 50 * 1000 * 30 // 50 номеров * 1000$ * 30 ночей
-      const test8 = CalculationService.calculateHotelTotal(hotel8) === expected8
-      this.assert(test8, 'Расчет стоимости отеля с большими числами', results)
-    } catch (error) {
-      this.handleError('Расчет стоимости отелей', error, results)
-    }
-  }
-
-  /**
-   * Тесты расчета стоимости дней тура
-   */
-  static testTourDayCalculations(results) {
-    console.log('\n📅 Тест 4: Расчет стоимости дней тура')
-
-    try {
-      // Простой тест
-      const day1 = {
-        activities: [{ cost: 50 }, { cost: 30 }, { cost: 20 }],
-      }
-      const expected1 = 50 + 30 + 20
-      const test1 = CalculationService.calculateDayTotal(day1) === expected1
-      this.assert(test1, 'Простой расчет стоимости дня тура', results)
-
-      // Тест без активностей
-      const day2 = { activities: [] }
-      const test2 = CalculationService.calculateDayTotal(day2) === 0
-      this.assert(test2, 'Расчет стоимости дня без активностей', results)
-
-      // Тест с одной активностью
-      const day3 = { activities: [{ cost: 100 }] }
-      const test3 = CalculationService.calculateDayTotal(day3) === 100
-      this.assert(test3, 'Расчет стоимости дня с одной активностью', results)
-
-      // Тест с невалидными данными
-      const day4 = { activities: [{ cost: 'abc' }, { cost: 50 }] }
-      const test4 = CalculationService.calculateDayTotal(day4) === 50
-      this.assert(test4, 'Расчет стоимости дня с невалидными данными', results)
-
-      // Тест с отрицательными значениями
-      const day5 = { activities: [{ cost: -20 }, { cost: 30 }] }
-      const test5 = CalculationService.calculateDayTotal(day5) === 30
-      this.assert(test5, 'Расчет стоимости дня с отрицательными значениями', results)
-
-      // Тест с большими числами
-      const day6 = { activities: [{ cost: 1000 }, { cost: 2000 }, { cost: 3000 }] }
-      const expected6 = 1000 + 2000 + 3000
-      const test6 = CalculationService.calculateDayTotal(day6) === expected6
-      this.assert(test6, 'Расчет стоимости дня с большими числами', results)
-    } catch (error) {
-      this.handleError('Расчет стоимости дней тура', error, results)
-    }
-  }
-
-  /**
-   * Тесты расчета базовой стоимости
-   */
-  static testBaseCostCalculations(results) {
-    console.log('\n💵 Тест 5: Расчет базовой стоимости')
-
-    try {
-      // Простой тест
-      const estimate1 = {
-        hotels: [
-          {
-            paxCount: 2,
-            accommodationType: 'double',
-            pricePerRoom: 100,
-            nights: 3,
-            isGuideHotel: false,
-          },
-        ],
-        tourDays: [{ activities: [{ cost: 50 }, { cost: 30 }] }],
-      }
-      const expected1 = 1 * 100 * 3 + (50 + 30) // отель + активности
-      const test1 = CalculationService.calculateBaseCost(estimate1) === expected1
-      this.assert(test1, 'Простой расчет базовой стоимости', results)
-
-      // Тест с несколькими отелями
-      const estimate2 = {
-        hotels: [
-          {
-            paxCount: 2,
-            accommodationType: 'double',
-            pricePerRoom: 100,
-            nights: 3,
-            isGuideHotel: false,
-          },
-          {
-            paxCount: 1,
-            accommodationType: 'single',
-            pricePerRoom: 80,
-            nights: 2,
-            isGuideHotel: false,
-          },
-        ],
-        tourDays: [],
-      }
-      const expected2 = 1 * 100 * 3 + 1 * 80 * 2
-      const test2 = CalculationService.calculateBaseCost(estimate2) === expected2
-      this.assert(test2, 'Расчет базовой стоимости с несколькими отелями', results)
-
-      // Тест с исключением guide hotels
-      const estimate3 = {
-        hotels: [
-          {
-            paxCount: 2,
-            accommodationType: 'double',
-            pricePerRoom: 100,
-            nights: 3,
-            isGuideHotel: false,
-          },
-          {
-            paxCount: 1,
-            accommodationType: 'single',
-            pricePerRoom: 80,
-            nights: 2,
-            isGuideHotel: true,
-          },
-        ],
-        tourDays: [],
-      }
-      const expected3 = 1 * 100 * 3 // только не-guide отель
-      const test3 = CalculationService.calculateBaseCost(estimate3) === expected3
-      this.assert(test3, 'Расчет базовой стоимости с исключением guide hotels', results)
-
-      // Тест с пустыми данными
-      const estimate4 = { hotels: [], tourDays: [] }
-      const test4 = CalculationService.calculateBaseCost(estimate4) === 0
-      this.assert(test4, 'Расчет базовой стоимости с пустыми данными', results)
-    } catch (error) {
-      this.handleError('Расчет базовой стоимости', error, results)
-    }
-  }
-
-  /**
-   * Тесты расчета наценки
-   */
-  static testMarkupCalculations(results) {
-    console.log('\n📈 Тест 6: Расчет наценки')
-
-    try {
-      // Простой тест
-      const estimate1 = {
+  // Сценарий 2: Трансферы (per_group)
+  transfers: {
+    name: 'Трансферы',
+    activities: [
+      {
+        name: 'Трансфер в гостиницу',
+        base_price: 40,
+        calculation_type: CalculationEngine.CALCULATION_TYPES.PER_GROUP,
         markup: 15,
-        hotels: [
-          {
-            paxCount: 2,
-            accommodationType: 'double',
-            pricePerRoom: 100,
-            nights: 3,
-            isGuideHotel: false,
-          },
-        ],
-        tourDays: [],
-      }
-      const baseCost1 = 1 * 100 * 3
-      const expected1 = (baseCost1 * 15) / 100
-      const test1 = CalculationService.calculateMarkupAmount(estimate1) === expected1
-      this.assert(test1, 'Простой расчет наценки', results)
+      },
+    ],
+    participantCount: 5,
+    expectedBaseCost: 40, // 1 × $40
+    expectedWithMarkup: 46, // 40 + 15%
+  },
 
-      // Тест с нулевой наценкой
-      const estimate2 = {
-        markup: 0,
-        hotels: [
-          {
-            paxCount: 2,
-            accommodationType: 'double',
-            pricePerRoom: 100,
-            nights: 3,
-            isGuideHotel: false,
-          },
-        ],
-        tourDays: [],
-      }
-      const test2 = CalculationService.calculateMarkupAmount(estimate2) === 0
-      this.assert(test2, 'Расчет наценки с нулевым процентом', results)
-
-      // Тест с большой наценкой
-      const estimate3 = {
-        markup: 50,
-        hotels: [
-          {
-            paxCount: 2,
-            accommodationType: 'double',
-            pricePerRoom: 100,
-            nights: 3,
-            isGuideHotel: false,
-          },
-        ],
-        tourDays: [],
-      }
-      const baseCost3 = 1 * 100 * 3
-      const expected3 = (baseCost3 * 50) / 100
-      const test3 = CalculationService.calculateMarkupAmount(estimate3) === expected3
-      this.assert(test3, 'Расчет наценки с большим процентом', results)
-
-      // Тест без наценки
-      const estimate4 = {
-        hotels: [
-          {
-            paxCount: 2,
-            accommodationType: 'double',
-            pricePerRoom: 100,
-            nights: 3,
-            isGuideHotel: false,
-          },
-        ],
-        tourDays: [],
-      }
-      const test4 = CalculationService.calculateMarkupAmount(estimate4) === 0
-      this.assert(test4, 'Расчет наценки без указания процента', results)
-    } catch (error) {
-      this.handleError('Расчет наценки', error, results)
-    }
-  }
-
-  /**
-   * Тесты расчета финальной стоимости
-   */
-  static testFinalCostCalculations(results) {
-    console.log('\n🎯 Тест 7: Расчет финальной стоимости')
-
-    try {
-      // Простой тест
-      const estimate1 = {
-        markup: 15,
-        hotels: [
-          {
-            paxCount: 2,
-            accommodationType: 'double',
-            pricePerRoom: 100,
-            nights: 3,
-            isGuideHotel: false,
-          },
-        ],
-        tourDays: [],
-      }
-      const baseCost1 = 1 * 100 * 3
-      const markup1 = (baseCost1 * 15) / 100
-      const expected1 = baseCost1 + markup1
-      const test1 = CalculationService.calculateFinalCost(estimate1) === expected1
-      this.assert(test1, 'Простой расчет финальной стоимости', results)
-
-      // Тест без наценки
-      const estimate2 = {
-        hotels: [
-          {
-            paxCount: 2,
-            accommodationType: 'double',
-            pricePerRoom: 100,
-            nights: 3,
-            isGuideHotel: false,
-          },
-        ],
-        tourDays: [],
-      }
-      const baseCost2 = 1 * 100 * 3
-      const test2 = CalculationService.calculateFinalCost(estimate2) === baseCost2
-      this.assert(test2, 'Расчет финальной стоимости без наценки', results)
-
-      // Тест с нулевой наценкой
-      const estimate3 = {
-        markup: 0,
-        hotels: [
-          {
-            paxCount: 2,
-            accommodationType: 'double',
-            pricePerRoom: 100,
-            nights: 3,
-            isGuideHotel: false,
-          },
-        ],
-        tourDays: [],
-      }
-      const baseCost3 = 1 * 100 * 3
-      const test3 = CalculationService.calculateFinalCost(estimate3) === baseCost3
-      this.assert(test3, 'Расчет финальной стоимости с нулевой наценкой', results)
-
-      // Тест с большими числами
-      const estimate4 = {
-        markup: 25,
-        hotels: [
-          {
-            paxCount: 10,
-            accommodationType: 'double',
-            pricePerRoom: 500,
-            nights: 7,
-            isGuideHotel: false,
-          },
-        ],
-        tourDays: [{ activities: [{ cost: 1000 }] }],
-      }
-      const baseCost4 = 5 * 500 * 7 + 1000
-      const markup4 = (baseCost4 * 25) / 100
-      const expected4 = baseCost4 + markup4
-      const test4 = CalculationService.calculateFinalCost(estimate4) === expected4
-      this.assert(test4, 'Расчет финальной стоимости с большими числами', results)
-    } catch (error) {
-      this.handleError('Расчет финальной стоимости', error, results)
-    }
-  }
-
-  /**
-   * Тесты edge cases
-   */
-  static testEdgeCases(results) {
-    console.log('\n⚠️ Тест 8: Edge cases')
-
-    try {
-      // Тест с очень большими числами
-      const hotel1 = {
-        paxCount: 1000,
+  // Сценарий 3: Размещение с округлением номеров
+  accommodation: {
+    name: 'Размещение в отеле',
+    hotels: [
+      {
+        name: 'Hotel Austral Plaza',
         accommodationType: 'double',
-        pricePerRoom: 10000,
-        nights: 365,
-      }
-      const test1 = !isNaN(CalculationService.calculateHotelTotal(hotel1))
-      this.assert(test1, 'Обработка очень больших чисел', results)
+        pricePerRoom: 150,
+        nights: 4,
+        markup: 10,
+      },
+    ],
+    participantCount: 5,
+    expectedRooms: 3, // Math.ceil(5/2)
+    expectedBaseCost: 1800, // 3 × $150 × 4
+    expectedWithMarkup: 1980, // 1800 + 10%
+  },
 
-      // Тест с очень маленькими числами
-      const hotel2 = { paxCount: 1, accommodationType: 'single', pricePerRoom: 0.01, nights: 1 }
-      const test2 = CalculationService.calculateHotelTotal(hotel2) === 0.01
-      this.assert(test2, 'Обработка очень маленьких чисел', results)
+  // Сценарий 4: Дифференцированные тарифы
+  differentialPricing: {
+    name: 'Билеты на поезд',
+    pricing: {
+      adult_price: 70,
+      child_price: 35,
+      markup: 10,
+    },
+    adultCount: 5,
+    childCount: 3,
+    expectedAdultCost: 350, // 5 × $70
+    expectedChildCost: 105, // 3 × $35
+    expectedTotal: 455, // 350 + 105
+    expectedWithMarkup: 500.5, // 455 + 10%
+  },
 
-      // Тест с максимальными значениями
-      const hotel3 = {
-        paxCount: Number.MAX_SAFE_INTEGER,
-        accommodationType: 'single',
-        pricePerRoom: 1,
-        nights: 1,
-      }
-      const test3 = !isNaN(CalculationService.calculateHotelTotal(hotel3))
-      this.assert(test3, 'Обработка максимальных значений', results)
+  // Сценарий 5: Работа гида (per_day)
+  guideWork: {
+    name: 'Работа гида',
+    activities: [
+      {
+        name: 'Работа гида',
+        base_price: 350,
+        calculation_type: CalculationEngine.CALCULATION_TYPES.PER_DAY,
+        markup: 10,
+      },
+    ],
+    days: 18,
+    participantCount: 5,
+    expectedBaseCost: 6300, // 18 × $350
+    expectedWithMarkup: 6930, // 6300 + 10%
+  },
 
-      // Тест с отрицательными значениями
-      const hotel4 = { paxCount: -5, accommodationType: 'double', pricePerRoom: 100, nights: 3 }
-      const test4 = CalculationService.calculateHotelTotal(hotel4) === 0
-      this.assert(test4, 'Обработка отрицательных значений', results)
+  // Сценарий 6: Комплексная смета
+  complexEstimate: {
+    name: 'Комплексная смета',
+    estimate: {
+      group: {
+        totalPax: 5,
+        markup: 10,
+      },
+      hotels: [
+        {
+          name: 'Hotel Austral Plaza',
+          accommodationType: 'double',
+          pricePerRoom: 150,
+          nights: 4,
+          markup: 10,
+        },
+      ],
+      tourDays: [
+        {
+          dayNumber: 1,
+          activities: [
+            {
+              name: 'Входные билеты в нац.парк',
+              base_price: 44,
+              calculation_type: CalculationEngine.CALCULATION_TYPES.PER_PERSON,
+              markup: 10,
+            },
+            {
+              name: 'Трансфер',
+              base_price: 40,
+              calculation_type: CalculationEngine.CALCULATION_TYPES.PER_GROUP,
+              markup: 15,
+            },
+          ],
+        },
+      ],
+      optionalServices: [
+        {
+          name: 'Страхование',
+          price: 25,
+          calculation_type: CalculationEngine.CALCULATION_TYPES.PER_PERSON,
+          markup: 5,
+        },
+      ],
+    },
+  },
+}
 
-      // Тест с undefined значениями
-      const hotel5 = {
-        paxCount: undefined,
-        accommodationType: 'double',
-        pricePerRoom: 100,
-        nights: 3,
-      }
-      const test5 = CalculationService.calculateHotelTotal(hotel5) === 0
-      this.assert(test5, 'Обработка undefined значений', results)
+/**
+ * Run comprehensive mathematical tests
+ */
+export function runComprehensiveTests() {
+  console.log('🧮 Запуск комплексных математических тестов...\n')
 
-      // Тест с null значениями
-      const hotel6 = { paxCount: null, accommodationType: 'double', pricePerRoom: 100, nights: 3 }
-      const test6 = CalculationService.calculateHotelTotal(hotel6) === 0
-      this.assert(test6, 'Обработка null значений', results)
-    } catch (error) {
-      this.handleError('Edge cases', error, results)
-    }
+  const results = {
+    passed: 0,
+    failed: 0,
+    tests: [],
   }
 
-  /**
-   * Тесты валидации данных
-   */
-  static testDataValidation(results) {
-    console.log('\n✅ Тест 9: Валидация данных')
+  // Тест 1: Входные билеты (per_person)
+  testEntranceTickets(results)
 
-    try {
-      // Тест валидной сметы
-      const estimate1 = {
-        group: { totalPax: 5 },
-        hotels: [
-          {
-            name: 'Hotel A',
-            paxCount: 5,
-            accommodationType: 'double',
-            pricePerRoom: 100,
-            nights: 3,
-          },
-        ],
-      }
-      const test1 = CalculationService.validateEstimate(estimate1).length === 0
-      this.assert(test1, 'Валидация корректной сметы', results)
+  // Тест 2: Трансферы (per_group)
+  testTransfers(results)
 
-      // Тест сметы без группы
-      const estimate2 = {
-        hotels: [
-          {
-            name: 'Hotel A',
-            paxCount: 5,
-            accommodationType: 'double',
-            pricePerRoom: 100,
-            nights: 3,
-          },
-        ],
-      }
-      const test2 = CalculationService.validateEstimate(estimate2).length > 0
-      this.assert(test2, 'Валидация сметы без группы', results)
+  // Тест 3: Размещение с округлением
+  testAccommodation(results)
 
-      // Тест сметы с невалидными данными отеля
-      const estimate3 = {
-        group: { totalPax: 5 },
-        hotels: [{ name: '', paxCount: 0, pricePerRoom: -50 }],
-      }
-      const test3 = CalculationService.validateEstimate(estimate3).length > 0
-      this.assert(test3, 'Валидация сметы с невалидными данными отеля', results)
+  // Тест 4: Дифференцированные тарифы
+  testDifferentialPricing(results)
 
-      // Тест пустой сметы
-      const estimate4 = {}
-      const test4 = CalculationService.validateEstimate(estimate4).length > 0
-      this.assert(test4, 'Валидация пустой сметы', results)
-    } catch (error) {
-      this.handleError('Валидация данных', error, results)
-    }
-  }
+  // Тест 5: Работа гида (per_day)
+  testGuideWork(results)
 
-  /**
-   * Вспомогательные методы
-   */
-  static assert(condition, testName, results) {
-    if (condition) {
+  // Тест 6: Комплексная смета
+  testComplexEstimate(results)
+
+  // Тест 7: Двойная система отображения
+  testDualDisplayMode(results)
+
+  // Тест 8: Интеллектуальные подстановки
+  testPricingIntelligence(results)
+
+  // Вывод результатов
+  console.log(`\n📊 Результаты тестов:`)
+  console.log(`✅ Пройдено: ${results.passed}`)
+  console.log(`❌ Провалено: ${results.failed}`)
+  console.log(
+    `📈 Успешность: ${((results.passed / (results.passed + results.failed)) * 100).toFixed(1)}%`,
+  )
+
+  return results
+}
+
+/**
+ * Test entrance tickets calculation (per_person)
+ */
+function testEntranceTickets(results) {
+  const testName = 'Входные билеты (per_person)'
+  console.log(`\n🔍 Тест: ${testName}`)
+
+  try {
+    const scenario = testScenarios.entranceTickets
+    const activity = scenario.activities[0]
+    const participantCount = scenario.participantCount
+
+    // Тест базового расчета
+    const baseCalculation = CalculationEngine.calculateActivityPrice(activity, participantCount, 0)
+
+    // Тест с наценкой
+    const markupCalculation = CalculationEngine.calculateActivityPrice(
+      activity,
+      participantCount,
+      activity.markup,
+    )
+
+    // Проверки
+    const baseCostCorrect = Math.abs(baseCalculation.subtotal - scenario.expectedBaseCost) < 0.01
+    const markupCostCorrect = Math.abs(markupCalculation.total - scenario.expectedWithMarkup) < 0.01
+
+    if (baseCostCorrect && markupCostCorrect) {
+      console.log(
+        `  ✅ Базовый расчет: $${baseCalculation.subtotal} (ожидалось $${scenario.expectedBaseCost})`,
+      )
+      console.log(
+        `  ✅ Расчет с наценкой: $${markupCalculation.total} (ожидалось $${scenario.expectedWithMarkup})`,
+      )
       results.passed++
-      console.log(`✅ ${testName}`)
     } else {
+      console.log(`  ❌ Ошибка в расчетах`)
+      console.log(`     Базовый: $${baseCalculation.subtotal} vs $${scenario.expectedBaseCost}`)
+      console.log(`     С наценкой: $${markupCalculation.total} vs $${scenario.expectedWithMarkup}`)
       results.failed++
-      console.log(`❌ ${testName}`)
     }
-  }
 
-  static handleError(testName, error, results) {
+    results.tests.push({
+      name: testName,
+      passed: baseCostCorrect && markupCostCorrect,
+      details: { baseCalculation, markupCalculation },
+    })
+  } catch (error) {
+    console.log(`  ❌ Ошибка: ${error.message}`)
     results.failed++
-    results.errors.push({ test: testName, error: error.message })
-    console.log(`❌ ${testName}: ${error.message}`)
-  }
-
-  static printResults(results) {
-    console.log('\n' + '='.repeat(80))
-    console.log('📊 ИТОГОВЫЕ РЕЗУЛЬТАТЫ ТЕСТИРОВАНИЯ')
-    console.log('='.repeat(80))
-    console.log(`Всего тестов: ${results.total}`)
-    console.log(`Пройдено: ${results.passed}`)
-    console.log(`Провалено: ${results.failed}`)
-    console.log(`Процент успеха: ${((results.passed / results.total) * 100).toFixed(1)}%`)
-
-    if (results.errors.length > 0) {
-      console.log('\n🚨 ОШИБКИ:')
-      results.errors.forEach(({ test, error }) => {
-        console.log(`  ${test}: ${error}`)
-      })
-    }
-
-    if (results.failed === 0) {
-      console.log('\n🎉 ВСЕ ТЕСТЫ ПРОЙДЕНЫ УСПЕШНО!')
-    } else {
-      console.log('\n⚠️ ЕСТЬ ПРОБЛЕМЫ, ТРЕБУЕТСЯ ИСПРАВЛЕНИЕ')
-    }
-
-    console.log('='.repeat(80))
+    results.tests.push({
+      name: testName,
+      passed: false,
+      error: error.message,
+    })
   }
 }
 
 /**
- * Экспорт функции для запуска тестов
+ * Test transfers calculation (per_group)
  */
-export function runComprehensiveMathTests() {
-  return ComprehensiveMathTests.runAllTests()
+function testTransfers(results) {
+  const testName = 'Трансферы (per_group)'
+  console.log(`\n🔍 Тест: ${testName}`)
+
+  try {
+    const scenario = testScenarios.transfers
+    const activity = scenario.activities[0]
+    const participantCount = scenario.participantCount
+
+    const baseCalculation = CalculationEngine.calculateActivityPrice(activity, participantCount, 0)
+
+    const markupCalculation = CalculationEngine.calculateActivityPrice(
+      activity,
+      participantCount,
+      activity.markup,
+    )
+
+    const baseCostCorrect = Math.abs(baseCalculation.subtotal - scenario.expectedBaseCost) < 0.01
+    const markupCostCorrect = Math.abs(markupCalculation.total - scenario.expectedWithMarkup) < 0.01
+
+    if (baseCostCorrect && markupCostCorrect) {
+      console.log(
+        `  ✅ Базовый расчет: $${baseCalculation.subtotal} (ожидалось $${scenario.expectedBaseCost})`,
+      )
+      console.log(
+        `  ✅ Расчет с наценкой: $${markupCalculation.total} (ожидалось $${scenario.expectedWithMarkup})`,
+      )
+      results.passed++
+    } else {
+      console.log(`  ❌ Ошибка в расчетах`)
+      results.failed++
+    }
+
+    results.tests.push({
+      name: testName,
+      passed: baseCostCorrect && markupCostCorrect,
+    })
+  } catch (error) {
+    console.log(`  ❌ Ошибка: ${error.message}`)
+    results.failed++
+    results.tests.push({
+      name: testName,
+      passed: false,
+      error: error.message,
+    })
+  }
+}
+
+/**
+ * Test accommodation with room rounding
+ */
+function testAccommodation(results) {
+  const testName = 'Размещение с округлением номеров'
+  console.log(`\n🔍 Тест: ${testName}`)
+
+  try {
+    const scenario = testScenarios.accommodation
+    const hotel = scenario.hotels[0]
+    const participantCount = scenario.participantCount
+
+    // Тест расчета количества номеров
+    const roomsNeeded = CalculationEngine.calculateRoomsNeeded(
+      participantCount,
+      hotel.accommodationType,
+    )
+
+    // Тест расчета размещения
+    const accommodationCalculation = CalculationEngine.calculateAccommodation(
+      hotel,
+      participantCount,
+      true,
+    )
+
+    const roomsCorrect = roomsNeeded === scenario.expectedRooms
+    const costCorrect =
+      Math.abs(accommodationCalculation.total - scenario.expectedWithMarkup) < 0.01
+
+    if (roomsCorrect && costCorrect) {
+      console.log(`  ✅ Количество номеров: ${roomsNeeded} (ожидалось ${scenario.expectedRooms})`)
+      console.log(
+        `  ✅ Стоимость: $${accommodationCalculation.total} (ожидалось $${scenario.expectedWithMarkup})`,
+      )
+      results.passed++
+    } else {
+      console.log(`  ❌ Ошибка в расчетах`)
+      console.log(`     Номера: ${roomsNeeded} vs ${scenario.expectedRooms}`)
+      console.log(
+        `     Стоимость: $${accommodationCalculation.total} vs $${scenario.expectedWithMarkup}`,
+      )
+      results.failed++
+    }
+
+    results.tests.push({
+      name: testName,
+      passed: roomsCorrect && costCorrect,
+    })
+  } catch (error) {
+    console.log(`  ❌ Ошибка: ${error.message}`)
+    results.failed++
+    results.tests.push({
+      name: testName,
+      passed: false,
+      error: error.message,
+    })
+  }
+}
+
+/**
+ * Test differential pricing (adults/children)
+ */
+function testDifferentialPricing(results) {
+  const testName = 'Дифференцированные тарифы (взрослые/дети)'
+  console.log(`\n🔍 Тест: ${testName}`)
+
+  try {
+    const scenario = testScenarios.differentialPricing
+    const pricing = scenario.pricing
+    const adultCount = scenario.adultCount
+    const childCount = scenario.childCount
+
+    const differentialCalculation = CalculationEngine.calculateDifferentialPricing(
+      pricing,
+      adultCount,
+      childCount,
+      CalculationEngine.DISPLAY_MODES.WITH_MARKUP,
+    )
+
+    const adultCostCorrect =
+      Math.abs(differentialCalculation.adult_base_cost - scenario.expectedAdultCost) < 0.01
+    const childCostCorrect =
+      Math.abs(differentialCalculation.child_base_cost - scenario.expectedChildCost) < 0.01
+    const totalCorrect =
+      Math.abs(differentialCalculation.total_with_markup - scenario.expectedWithMarkup) < 0.01
+
+    if (adultCostCorrect && childCostCorrect && totalCorrect) {
+      console.log(`  ✅ Стоимость взрослых: $${differentialCalculation.adult_base_cost}`)
+      console.log(`  ✅ Стоимость детей: $${differentialCalculation.child_base_cost}`)
+      console.log(`  ✅ Общая стоимость: $${differentialCalculation.total_with_markup}`)
+      results.passed++
+    } else {
+      console.log(`  ❌ Ошибка в расчетах`)
+      results.failed++
+    }
+
+    results.tests.push({
+      name: testName,
+      passed: adultCostCorrect && childCostCorrect && totalCorrect,
+    })
+  } catch (error) {
+    console.log(`  ❌ Ошибка: ${error.message}`)
+    results.failed++
+    results.tests.push({
+      name: testName,
+      passed: false,
+      error: error.message,
+    })
+  }
+}
+
+/**
+ * Test guide work calculation (per_day)
+ */
+function testGuideWork(results) {
+  const testName = 'Работа гида (per_day)'
+  console.log(`\n🔍 Тест: ${testName}`)
+
+  try {
+    const scenario = testScenarios.guideWork
+    const activity = scenario.activities[0]
+    const days = scenario.days
+
+    // Создаем активность с количеством дней
+    const activityWithDays = {
+      ...activity,
+      quantity: days,
+    }
+
+    const calculation = CalculationEngine.calculateActivityPrice(
+      activityWithDays,
+      scenario.participantCount,
+      activity.markup,
+    )
+
+    const costCorrect = Math.abs(calculation.total - scenario.expectedWithMarkup) < 0.01
+
+    if (costCorrect) {
+      console.log(
+        `  ✅ Стоимость работы гида: $${calculation.total} (ожидалось $${scenario.expectedWithMarkup})`,
+      )
+      results.passed++
+    } else {
+      console.log(
+        `  ❌ Ошибка в расчетах: $${calculation.total} vs $${scenario.expectedWithMarkup}`,
+      )
+      results.failed++
+    }
+
+    results.tests.push({
+      name: testName,
+      passed: costCorrect,
+    })
+  } catch (error) {
+    console.log(`  ❌ Ошибка: ${error.message}`)
+    results.failed++
+    results.tests.push({
+      name: testName,
+      passed: false,
+      error: error.message,
+    })
+  }
+}
+
+/**
+ * Test complex estimate calculation
+ */
+function testComplexEstimate(results) {
+  const testName = 'Комплексная смета'
+  console.log(`\n🔍 Тест: ${testName}`)
+
+  try {
+    const scenario = testScenarios.complexEstimate
+    const estimate = scenario.estimate
+
+    const calculation = CalculationEngine.calculateEstimateTotalDual(
+      estimate,
+      CalculationEngine.DISPLAY_MODES.WITH_MARKUP,
+    )
+
+    // Проверяем, что расчеты корректны
+    const hasCategorySubtotals = calculation.category_subtotals
+    const hasBaseTotal = calculation.base_total > 0
+    const hasGeneralMarkup = calculation.general_markup_amount > 0
+    const hasFinalTotal = calculation.final_total > 0
+
+    if (hasCategorySubtotals && hasBaseTotal && hasGeneralMarkup && hasFinalTotal) {
+      console.log(`  ✅ Базовая стоимость: $${calculation.base_total}`)
+      console.log(`  ✅ Общая наценка: $${calculation.general_markup_amount}`)
+      console.log(`  ✅ Финальная стоимость: $${calculation.final_total}`)
+      console.log(`  ✅ Категории: ${Object.keys(calculation.category_subtotals).join(', ')}`)
+      results.passed++
+    } else {
+      console.log(`  ❌ Ошибка в комплексном расчете`)
+      results.failed++
+    }
+
+    results.tests.push({
+      name: testName,
+      passed: hasCategorySubtotals && hasBaseTotal && hasGeneralMarkup && hasFinalTotal,
+    })
+  } catch (error) {
+    console.log(`  ❌ Ошибка: ${error.message}`)
+    results.failed++
+    results.tests.push({
+      name: testName,
+      passed: false,
+      error: error.message,
+    })
+  }
+}
+
+/**
+ * Test dual display mode
+ */
+function testDualDisplayMode(results) {
+  const testName = 'Двойная система отображения'
+  console.log(`\n🔍 Тест: ${testName}`)
+
+  try {
+    const scenario = testScenarios.entranceTickets
+    const activity = scenario.activities[0]
+    const participantCount = scenario.participantCount
+
+    // Тест без наценки
+    const withoutMarkup = CalculationEngine.calculateActivityPriceDual(
+      activity,
+      participantCount,
+      CalculationEngine.DISPLAY_MODES.WITHOUT_MARKUP,
+    )
+
+    // Тест с наценкой
+    const withMarkup = CalculationEngine.calculateActivityPriceDual(
+      activity,
+      participantCount,
+      CalculationEngine.DISPLAY_MODES.WITH_MARKUP,
+    )
+
+    const basePriceCorrect =
+      Math.abs(withoutMarkup.display_price - scenario.expectedBaseCost) < 0.01
+    const markupPriceCorrect =
+      Math.abs(withMarkup.display_price - scenario.expectedWithMarkup) < 0.01
+    const hasBothPrices = withoutMarkup.base_price && withMarkup.price_with_markup
+
+    if (basePriceCorrect && markupPriceCorrect && hasBothPrices) {
+      console.log(`  ✅ Без наценки: $${withoutMarkup.display_price}`)
+      console.log(`  ✅ С наценкой: $${withMarkup.display_price}`)
+      console.log(`  ✅ Оба режима работают корректно`)
+      results.passed++
+    } else {
+      console.log(`  ❌ Ошибка в двойном отображении`)
+      results.failed++
+    }
+
+    results.tests.push({
+      name: testName,
+      passed: basePriceCorrect && markupPriceCorrect && hasBothPrices,
+    })
+  } catch (error) {
+    console.log(`  ❌ Ошибка: ${error.message}`)
+    results.failed++
+    results.tests.push({
+      name: testName,
+      passed: false,
+      error: error.message,
+    })
+  }
+}
+
+/**
+ * Test pricing intelligence
+ */
+function testPricingIntelligence(results) {
+  const testName = 'Интеллектуальные подстановки цен'
+  console.log(`\n🔍 Тест: ${testName}`)
+
+  try {
+    // Тест 1: Входные билеты
+    const entranceSuggestion = PricingIntelligenceService.suggestPricing(
+      'Входные билеты в нац.парк',
+      'entrance',
+      5,
+    )
+
+    // Тест 2: Трансфер
+    const transferSuggestion = PricingIntelligenceService.suggestPricing(
+      'Трансфер в гостиницу',
+      'transfer',
+      5,
+    )
+
+    const entranceValid = entranceSuggestion.suggested && entranceSuggestion.confidence > 0.5
+    const transferValid = transferSuggestion.suggested && transferSuggestion.confidence > 0.5
+    const hasCorrectTypes =
+      entranceSuggestion.calculation_type && transferSuggestion.calculation_type
+
+    if (entranceValid && transferValid && hasCorrectTypes) {
+      console.log(
+        `  ✅ Входные билеты: ${entranceSuggestion.calculation_type} (уверенность: ${entranceSuggestion.confidence})`,
+      )
+      console.log(
+        `  ✅ Трансфер: ${transferSuggestion.calculation_type} (уверенность: ${transferSuggestion.confidence})`,
+      )
+      results.passed++
+    } else {
+      console.log(`  ❌ Ошибка в интеллектуальных подстановках`)
+      results.failed++
+    }
+
+    results.tests.push({
+      name: testName,
+      passed: entranceValid && transferValid && hasCorrectTypes,
+    })
+  } catch (error) {
+    console.log(`  ❌ Ошибка: ${error.message}`)
+    results.failed++
+    results.tests.push({
+      name: testName,
+      passed: false,
+      error: error.message,
+    })
+  }
+}
+
+// Экспорт для использования в других модулях
+export default {
+  runComprehensiveTests,
+  testScenarios,
 }

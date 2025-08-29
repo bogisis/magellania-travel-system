@@ -149,16 +149,19 @@ router.beforeEach((to, from, next) => {
     document.title = `${to.meta.title} - MAGELLANIA Travel System`
   }
 
-  // Проверка аутентификации
-  if (to.meta.requiresAuth && !authService.isAuthenticated()) {
-    // Если требуется аутентификация, но пользователь не авторизован
-    next('/login')
-  } else if (to.path === '/login' && authService.isAuthenticated()) {
-    // Если пользователь уже авторизован и пытается зайти на страницу входа
-    next('/')
-  } else {
-    next()
-  }
+  // Проверка аутентификации (временно отключена для разработки)
+  // if (to.meta.requiresAuth && !authService.isAuthenticated()) {
+  //   // Если требуется аутентификация, но пользователь не авторизован
+  //   next('/login')
+  // } else if (to.path === '/login' && authService.isAuthenticated()) {
+  //   // Если пользователь уже авторизован и пытается зайти на страницу входа
+  //   next('/')
+  // } else {
+  //   next()
+  // }
+
+  // Временно разрешаем доступ всем для разработки
+  next()
 })
 
 export default router

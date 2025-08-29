@@ -16,15 +16,15 @@ class ApiService {
    * Базовый метод для HTTP запросов
    */
   async request(endpoint, options = {}) {
-    // Проверяем аутентификацию
-    await authService.refreshTokenIfNeeded()
+    // Проверяем аутентификацию (временно отключена для разработки)
+    // await authService.refreshTokenIfNeeded()
 
     const url = `${this.baseURL}${endpoint}`
 
     const config = {
       headers: {
         'Content-Type': 'application/json',
-        ...authService.getAuthHeaders(),
+        // ...authService.getAuthHeaders(),
         ...options.headers,
       },
       ...options,

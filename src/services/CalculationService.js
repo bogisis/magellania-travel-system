@@ -11,13 +11,13 @@ export class CalculationService {
     if (value === null || value === undefined || value === '') {
       return defaultValue
     }
-    
+
     const num = Number(value)
     if (isNaN(num)) {
       console.warn(`Invalid number value: ${value}, using default: ${defaultValue}`)
       return defaultValue
     }
-    
+
     return num
   }
 
@@ -41,7 +41,7 @@ export class CalculationService {
     }
 
     const paxCount = this.validatePositiveNumber(hotel.paxCount, 'paxCount')
-    
+
     switch (hotel.accommodationType) {
       case 'double':
         return Math.ceil(paxCount / 2)
@@ -95,6 +95,20 @@ export class CalculationService {
   }
 
   /**
+   * Расчет стоимости рейсов
+   */
+  static calculateFlightsCost(flights) {
+    if (!flights || !Array.isArray(flights)) {
+      return 0
+    }
+
+    return flights.reduce((sum, flight) => {
+      const cost = this.safeNumber(flight.finalPrice || flight.totalPrice, 0)
+      return sum + cost
+    }, 0)
+  }
+
+  /**
    * Расчет базовой стоимости сметы
    */
   static calculateBaseCost(estimate) {
@@ -102,21 +116,23 @@ export class CalculationService {
 
     // Стоимость гостиниц (без гостиниц для гида)
     const hotelsCost = (estimate.hotels || [])
-      .filter(hotel => !hotel.isGuideHotel)
+      .filter((hotel) => !hotel.isGuideHotel)
       .reduce((sum, hotel) => {
         return sum + this.calculateHotelTotal(hotel)
       }, 0)
 
     // Стоимость активностей
-    const activitiesCost = (estimate.tourDays || [])
-      .reduce((sum, day) => {
-        return sum + this.calculateDayTotal(day)
-      }, 0)
+    const activitiesCost = (estimate.tourDays || []).reduce((sum, day) => {
+      return sum + this.calculateDayTotal(day)
+    }, 0)
 
     // Стоимость дополнительных услуг
     const optionalServicesCost = this.calculateOptionalServicesCost(estimate.optionalServices)
 
-    return hotelsCost + activitiesCost + optionalServicesCost
+    // Стоимость рейсов
+    const flightsCost = this.calculateFlightsCost(estimate.flights)
+
+    return hotelsCost + activitiesCost + optionalServicesCost + flightsCost
   }
 
   /**
@@ -154,7 +170,7 @@ export class CalculationService {
     if (!estimate || !estimate.hotels) return 0
 
     return estimate.hotels
-      .filter(hotel => hotel.isGuideHotel)
+      .filter((hotel) => hotel.isGuideHotel)
       .reduce((sum, hotel) => {
         return sum + this.calculateHotelTotal(hotel)
       }, 0)
@@ -185,7 +201,7 @@ export class CalculationService {
         if (!hotel.name) {
           errors.push(`Hotel ${index + 1}: name is required`)
         }
-        
+
         const paxCount = this.safeNumber(hotel.paxCount, 0)
         if (paxCount <= 0) {
           errors.push(`Hotel ${index + 1}: pax count must be greater than 0`)
@@ -206,7 +222,7 @@ export class CalculationService {
    */
   static formatCurrency(amount, currency = 'USD', locale = 'en-US') {
     const safeAmount = this.safeNumber(amount, 0)
-    
+
     return new Intl.NumberFormat(locale, {
       style: 'currency',
       currency: currency,
@@ -221,11 +237,11 @@ export class CalculationService {
   static calculatePercentage(value, total) {
     const safeValue = this.safeNumber(value, 0)
     const safeTotal = this.safeNumber(total, 0)
-    
+
     if (safeTotal === 0) {
       return 0
     }
-    
+
     return (safeValue / safeTotal) * 100
   }
 

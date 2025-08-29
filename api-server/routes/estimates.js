@@ -6,7 +6,7 @@ const { query, get, run } = require('../database/init')
 router.get('/', async (req, res) => {
   try {
     const { status, clientId, search } = req.query
-    
+
     let sql = `
       SELECT e.*, c.name as clientName, c.email as clientEmail
       FROM estimates e
@@ -14,33 +14,40 @@ router.get('/', async (req, res) => {
       WHERE 1=1
     `
     const params = []
-    
+
     if (status) {
       sql += ' AND e.status = ?'
       params.push(status)
     }
-    
+
     if (clientId) {
       sql += ' AND e.clientId = ?'
       params.push(clientId)
     }
-    
+
     if (search) {
       sql += ' AND (e.name LIKE ? OR e.tourName LIKE ? OR c.name LIKE ?)'
       const searchTerm = `%${search}%`
       params.push(searchTerm, searchTerm, searchTerm)
     }
-    
+
     sql += ' ORDER BY e.createdAt DESC'
-    
+
     const estimates = await query(sql, params)
-    
+
     // Парсим JSON поля
-    const parsedEstimates = estimates.map(estimate => ({
+    const parsedEstimates = estimates.map((estimate) => ({
       ...estimate,
-      tags: JSON.parse(estimate.tags || '[]')
+      tags: JSON.parse(estimate.tags || '[]'),
+      flights: JSON.parse(estimate.flights || '[]'),
+      hotels: JSON.parse(estimate.hotels || '[]'),
+      tourDays: JSON.parse(estimate.tourDays || '[]'),
+      optionalServices: JSON.parse(estimate.optionalServices || '[]'),
+      location: JSON.parse(estimate.location || '{}'),
+      tourDates: JSON.parse(estimate.tourDates || '{}'),
+      group: JSON.parse(estimate.groupData || '{}'),
     }))
-    
+
     res.json(parsedEstimates)
   } catch (error) {
     console.error('Ошибка получения смет:', error)
@@ -52,23 +59,30 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params
-    
+
     const sql = `
       SELECT e.*, c.name as clientName, c.email as clientEmail, c.phone as clientPhone
       FROM estimates e
       LEFT JOIN clients c ON e.clientId = c.id
       WHERE e.id = ?
     `
-    
+
     const estimate = await get(sql, [id])
-    
+
     if (!estimate) {
       return res.status(404).json({ error: 'Смета не найдена' })
     }
-    
+
     // Парсим JSON поля
     estimate.tags = JSON.parse(estimate.tags || '[]')
-    
+    estimate.flights = JSON.parse(estimate.flights || '[]')
+    estimate.hotels = JSON.parse(estimate.hotels || '[]')
+    estimate.tourDays = JSON.parse(estimate.tourDays || '[]')
+    estimate.optionalServices = JSON.parse(estimate.optionalServices || '[]')
+    estimate.location = JSON.parse(estimate.location || '{}')
+    estimate.tourDates = JSON.parse(estimate.tourDates || '{}')
+    estimate.group = JSON.parse(estimate.groupData || '{}')
+
     res.json(estimate)
   } catch (error) {
     console.error('Ошибка получения сметы:', error)
@@ -92,35 +106,72 @@ router.post('/', async (req, res) => {
       totalPrice = 0,
       margin = 0,
       discount = 0,
-      tags = []
+      tags = [],
+      flights = [],
+      hotels = [],
+      tourDays = [],
+      optionalServices = [],
+      location = {},
+      tourDates = {},
+      groupData = {},
+      markup = 0,
+      currency = 'USD',
     } = req.body
-    
+
     if (!name) {
       return res.status(400).json({ error: 'Название сметы обязательно' })
     }
-    
+
     const sql = `
       INSERT INTO estimates (
         name, tourName, country, region, startDate, duration, status,
         clientId, assignedManager, totalPrice, margin, discount, tags,
+        flights, hotels, tourDays, optionalServices, location, tourDates, group, markup, currency,
         createdAt, updatedAt
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
     `
-    
+
     const params = [
-      name, tourName, country, region, startDate, duration, status,
-      clientId, assignedManager, totalPrice, margin, discount, JSON.stringify(tags)
+      name,
+      tourName,
+      country,
+      region,
+      startDate,
+      duration,
+      status,
+      clientId,
+      assignedManager,
+      totalPrice,
+      margin,
+      discount,
+      JSON.stringify(tags),
+      JSON.stringify(flights),
+      JSON.stringify(hotels),
+      JSON.stringify(tourDays),
+      JSON.stringify(optionalServices),
+      JSON.stringify(location),
+      JSON.stringify(tourDates),
+      JSON.stringify(group),
+      markup,
+      currency,
     ]
-    
+
     const result = await run(sql, params)
-    
+
     // Получаем созданную смету
     const createdEstimate = await get('SELECT * FROM estimates WHERE id = ?', [result.id])
     createdEstimate.tags = JSON.parse(createdEstimate.tags || '[]')
-    
+    createdEstimate.flights = JSON.parse(createdEstimate.flights || '[]')
+    createdEstimate.hotels = JSON.parse(createdEstimate.hotels || '[]')
+    createdEstimate.tourDays = JSON.parse(createdEstimate.tourDays || '[]')
+    createdEstimate.optionalServices = JSON.parse(createdEstimate.optionalServices || '[]')
+    createdEstimate.location = JSON.parse(createdEstimate.location || '{}')
+    createdEstimate.tourDates = JSON.parse(createdEstimate.tourDates || '{}')
+    createdEstimate.group = JSON.parse(createdEstimate.groupData || '{}')
+
     res.status(201).json({
       message: 'Смета создана успешно',
-      estimate: createdEstimate
+      estimate: createdEstimate,
     })
   } catch (error) {
     console.error('Ошибка создания сметы:', error)
@@ -145,15 +196,24 @@ router.put('/:id', async (req, res) => {
       totalPrice,
       margin,
       discount,
-      tags
+      tags,
+      flights,
+      hotels,
+      tourDays,
+      optionalServices,
+      location,
+      tourDates,
+      groupData,
+      markup,
+      currency,
     } = req.body
-    
+
     // Проверяем существование сметы
     const existingEstimate = await get('SELECT * FROM estimates WHERE id = ?', [id])
     if (!existingEstimate) {
       return res.status(404).json({ error: 'Смета не найдена' })
     }
-    
+
     const sql = `
       UPDATE estimates SET
         name = COALESCE(?, name),
@@ -169,26 +229,54 @@ router.put('/:id', async (req, res) => {
         margin = COALESCE(?, margin),
         discount = COALESCE(?, discount),
         tags = COALESCE(?, tags),
+        flights = COALESCE(?, flights),
+        hotels = COALESCE(?, hotels),
+        tourDays = COALESCE(?, tourDays),
+        optionalServices = COALESCE(?, optionalServices),
+        location = COALESCE(?, location),
+        tourDates = COALESCE(?, tourDates),
+        groupData = COALESCE(?, groupData),
+        markup = COALESCE(?, markup),
+        currency = COALESCE(?, currency),
         updatedAt = datetime('now')
       WHERE id = ?
     `
-    
+
     const params = [
-      name, tourName, country, region, startDate, duration, status,
-      clientId, assignedManager, totalPrice, margin, discount,
+      name,
+      tourName,
+      country,
+      region,
+      startDate,
+      duration,
+      status,
+      clientId,
+      assignedManager,
+      totalPrice,
+      margin,
+      discount,
       tags ? JSON.stringify(tags) : null,
-      id
+      flights ? JSON.stringify(flights) : null,
+      hotels ? JSON.stringify(hotels) : null,
+      tourDays ? JSON.stringify(tourDays) : null,
+      optionalServices ? JSON.stringify(optionalServices) : null,
+      location ? JSON.stringify(location) : null,
+      tourDates ? JSON.stringify(tourDates) : null,
+      groupData ? JSON.stringify(groupData) : null,
+      markup,
+      currency,
+      id,
     ]
-    
+
     await run(sql, params)
-    
+
     // Получаем обновленную смету
     const updatedEstimate = await get('SELECT * FROM estimates WHERE id = ?', [id])
     updatedEstimate.tags = JSON.parse(updatedEstimate.tags || '[]')
-    
+
     res.json({
       message: 'Смета обновлена успешно',
-      estimate: updatedEstimate
+      estimate: updatedEstimate,
     })
   } catch (error) {
     console.error('Ошибка обновления сметы:', error)
@@ -200,22 +288,20 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params
-    
+
     // Проверяем существование сметы
     const existingEstimate = await get('SELECT * FROM estimates WHERE id = ?', [id])
     if (!existingEstimate) {
       return res.status(404).json({ error: 'Смета не найдена' })
     }
-    
+
     await run('DELETE FROM estimates WHERE id = ?', [id])
-    
+
     res.json({ message: 'Смета удалена успешно' })
   } catch (error) {
     console.error('Ошибка удаления сметы:', error)
     res.status(500).json({ error: error.message })
   }
 })
-
-
 
 module.exports = router

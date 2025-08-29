@@ -175,7 +175,7 @@ const seedData = () => {
 }
 
 // Функции для расчета стоимости сметы
-function calculateEstimateTotal(group, hotels, tourDays, optionalServices) {
+function calculateEstimateTotal(group, hotels, tourDays, optionalServices, flights) {
   try {
     // Расчет стоимости гостиниц (без гостиниц для гида)
     const hotelsCost = (hotels || [])
@@ -202,8 +202,14 @@ function calculateEstimateTotal(group, hotels, tourDays, optionalServices) {
       0,
     )
 
+    // Расчет стоимости рейсов
+    const flightsCost = (flights || []).reduce(
+      (sum, flight) => sum + Number(flight.finalPrice || flight.totalPrice || 0),
+      0,
+    )
+
     // Базовая стоимость
-    const baseCost = hotelsCost + activitiesCost + servicesCost
+    const baseCost = hotelsCost + activitiesCost + servicesCost + flightsCost
 
     // Расчет маржи
     const markup = Number(group?.markup || 0)
@@ -261,9 +267,9 @@ app.get('/api/health', (req, res) => {
 app.get('/api/estimates', async (req, res) => {
   try {
     const estimates = await query(`
-      SELECT e.*, c.name as clientName 
-      FROM estimates e 
-      LEFT JOIN clients c ON e.clientId = c.id 
+      SELECT e.*, c.name as clientName
+      FROM estimates e
+      LEFT JOIN clients c ON e.clientId = c.id
       ORDER BY e.createdAt DESC
     `)
 
@@ -301,6 +307,7 @@ app.get('/api/estimates', async (req, res) => {
       optionalServices: estimate.optional_services_data
         ? JSON.parse(estimate.optional_services_data)
         : [],
+      flights: estimate.flights ? JSON.parse(estimate.flights) : [],
     }))
 
     res.json(fullEstimates)
@@ -315,9 +322,9 @@ app.get('/api/estimates/:id', async (req, res) => {
     const { id } = req.params
     const estimate = await get(
       `
-      SELECT e.*, c.name as clientName 
-      FROM estimates e 
-      LEFT JOIN clients c ON e.clientId = c.id 
+      SELECT e.*, c.name as clientName
+      FROM estimates e
+      LEFT JOIN clients c ON e.clientId = c.id
       WHERE e.id = ?
     `,
       [id],
@@ -368,6 +375,7 @@ app.get('/api/estimates/:id', async (req, res) => {
             guidesCount: 0,
             markup: 0,
           },
+      flights: estimate.flights ? JSON.parse(estimate.flights) : [],
       hotels: estimate.hotels_data ? JSON.parse(estimate.hotels_data) : [],
       tourDays: estimate.tour_days_data ? JSON.parse(estimate.tour_days_data) : [],
       optionalServices: estimate.optional_services_data
@@ -401,6 +409,7 @@ app.post('/api/estimates', async (req, res) => {
       location,
       tourDates,
       group,
+      flights,
       hotels,
       tourDays,
       optionalServices,
@@ -411,16 +420,22 @@ app.post('/api/estimates', async (req, res) => {
     }
 
     // Автоматически рассчитываем totalPrice
-    const calculatedTotalPrice = calculateEstimateTotal(group, hotels, tourDays, optionalServices)
+    const calculatedTotalPrice = calculateEstimateTotal(
+      group,
+      hotels,
+      tourDays,
+      optionalServices,
+      flights,
+    )
 
     const result = await run(
       `
       INSERT INTO estimates (
         name, tourName, client, title, description, country, region, startDate, duration,
         clientId, totalPrice, markup, currency, location_data, tour_dates_data, group_data,
-        hotels_data, tour_days_data, optional_services_data, createdAt, updatedAt
+        flights, hotels_data, tour_days_data, optional_services_data, createdAt, updatedAt
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
     `,
       [
         name,
@@ -439,6 +454,7 @@ app.post('/api/estimates', async (req, res) => {
         JSON.stringify(location || {}),
         JSON.stringify(tourDates || {}),
         JSON.stringify(group || {}),
+        JSON.stringify(flights || []),
         JSON.stringify(hotels || []),
         JSON.stringify(tourDays || []),
         JSON.stringify(optionalServices || []),
@@ -474,6 +490,7 @@ app.put('/api/estimates/:id', async (req, res) => {
       location,
       tourDates,
       group,
+      flights,
       hotels,
       tourDays,
       optionalServices,
@@ -484,14 +501,20 @@ app.put('/api/estimates/:id', async (req, res) => {
     }
 
     // Автоматически рассчитываем totalPrice
-    const calculatedTotalPrice = calculateEstimateTotal(group, hotels, tourDays, optionalServices)
+    const calculatedTotalPrice = calculateEstimateTotal(
+      group,
+      hotels,
+      tourDays,
+      optionalServices,
+      flights,
+    )
 
     const result = await run(
       `
       UPDATE estimates SET
         name = ?, tourName = ?, client = ?, title = ?, description = ?, country = ?, region = ?,
         startDate = ?, duration = ?, clientId = ?, totalPrice = ?, markup = ?, currency = ?,
-        location_data = ?, tour_dates_data = ?, group_data = ?, hotels_data = ?, tour_days_data = ?,
+        location_data = ?, tour_dates_data = ?, group_data = ?, flights = ?, hotels_data = ?, tour_days_data = ?,
         optional_services_data = ?, updatedAt = datetime('now')
       WHERE id = ?
     `,
@@ -512,6 +535,7 @@ app.put('/api/estimates/:id', async (req, res) => {
         JSON.stringify(location || {}),
         JSON.stringify(tourDates || {}),
         JSON.stringify(group || {}),
+        JSON.stringify(flights || []),
         JSON.stringify(hotels || []),
         JSON.stringify(tourDays || []),
         JSON.stringify(optionalServices || []),

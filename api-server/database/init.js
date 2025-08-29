@@ -41,6 +41,15 @@ CREATE TABLE IF NOT EXISTS estimates (
   margin REAL DEFAULT 0,
   discount REAL DEFAULT 0,
   tags TEXT DEFAULT '[]',
+  flights TEXT DEFAULT '[]',
+  hotels TEXT DEFAULT '[]',
+  tourDays TEXT DEFAULT '[]',
+  optionalServices TEXT DEFAULT '[]',
+  location TEXT DEFAULT '{}',
+  tourDates TEXT DEFAULT '{}',
+  groupData TEXT DEFAULT '{}',
+  markup REAL DEFAULT 0,
+  currency TEXT DEFAULT 'USD',
   createdAt TEXT DEFAULT (datetime('now')),
   updatedAt TEXT DEFAULT (datetime('now')),
   FOREIGN KEY (clientId) REFERENCES clients (id) ON DELETE SET NULL
@@ -194,7 +203,7 @@ INSERT OR IGNORE INTO estimates (name, tourName, country, region, startDate, dur
 async function initDatabase() {
   return new Promise((resolve, reject) => {
     console.log('🗄️ Инициализация SQLite базы данных...')
-    
+
     // Выполняем создание таблиц
     db.exec(schema, (err) => {
       if (err) {
@@ -202,9 +211,9 @@ async function initDatabase() {
         reject(err)
         return
       }
-      
+
       console.log('✅ Схема базы данных создана')
-      
+
       // Добавляем демо-данные
       db.exec(seedData, (err) => {
         if (err) {
@@ -212,7 +221,7 @@ async function initDatabase() {
           reject(err)
           return
         }
-        
+
         console.log('✅ Демо-данные добавлены')
         resolve()
       })
@@ -249,7 +258,7 @@ function get(sql, params = []) {
 // Функция для выполнения операций вставки/обновления
 function run(sql, params = []) {
   return new Promise((resolve, reject) => {
-    db.run(sql, params, function(err) {
+    db.run(sql, params, function (err) {
       if (err) {
         reject(err)
       } else {
@@ -264,5 +273,5 @@ module.exports = {
   initDatabase,
   query,
   get,
-  run
+  run,
 }

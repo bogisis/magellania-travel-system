@@ -299,6 +299,7 @@ import TourDateSelector from '@/components/estimates/TourDateSelector.vue'
 import GroupManager from '@/components/estimates/GroupManager.vue'
 import HotelManager from '@/components/estimates/HotelManager.vue'
 import TourDaysManager from '@/components/estimates/TourDaysManager.vue'
+import ActivityCreator from '@/components/estimates/ActivityCreator.vue'
 
 const router = useRouter()
 const estimateStore = useEstimateStore()

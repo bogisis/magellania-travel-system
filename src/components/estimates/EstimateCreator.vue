@@ -49,7 +49,7 @@
           </button>
           <button
             type="button"
-            @click="runComprehensiveTests"
+            @click="runComprehensiveTestsLocal"
             class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
           >
             🧪 Комплексное тестирование
@@ -182,6 +182,20 @@
           @move-to-estimate="onMoveToEstimate"
         />
       </div>
+
+      <!-- Скидки и доплаты -->
+      <DiscountManager
+        :estimate="estimate"
+        :base-cost="baseCost"
+        @adjustments-changed="onAdjustmentsChanged"
+      />
+
+      <!-- Перелеты -->
+      <FlightManager
+        :estimate="estimate"
+        @update:estimate="updateEstimate"
+        @flight-removed="onFlightRemoved"
+      />
 
       <!-- Настройки сметы -->
       <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -318,6 +332,10 @@
                 <span class="font-medium">{{ formatCurrency(activitiesCost) }}</span>
               </div>
               <div class="flex justify-between">
+                <span class="text-gray-600">Рейсы:</span>
+                <span class="font-medium">{{ formatCurrency(flightsCost) }}</span>
+              </div>
+              <div class="flex justify-between">
                 <span class="text-gray-600">Транспорт:</span>
                 <span class="font-medium">{{ formatCurrency(transportCost) }}</span>
               </div>
@@ -391,20 +409,25 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onUnmounted } from 'vue'
+import { ref, computed, watch, onUnmounted, nextTick } from 'vue'
 import { Save, Download, Eye, Check, RefreshCw } from 'lucide-vue-next'
-import { runCalculationTests, validateEstimate } from '@/utils/calculationTests.js'
 import { CalculationService } from '@/services/CalculationService.js'
-import { runComprehensiveMathTests } from '@/utils/comprehensiveMathTests.js'
+import { runComprehensiveTests } from '@/utils/comprehensiveMathTests.js'
 import { provideEstimateContext } from '@/composables/useEstimateContext.js'
+import { useToastStore } from '@/stores/toastStore.js'
 import LocationSelector from './LocationSelector.vue'
 import TourDateSelector from './TourDateSelector.vue'
 import GroupManager from './GroupManager.vue'
 import HotelManager from './HotelManager.vue'
 import TourDaysManager from './TourDaysManager.vue'
 import OptionalServicesManager from './OptionalServicesManager.vue'
+import DiscountManager from './DiscountManager.vue'
+import FlightManager from './FlightManager.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import currencyService from '@/services/currencyService'
+
+// Инициализация toast store
+const toastStore = useToastStore()
 
 // Props
 const props = defineProps({
@@ -446,6 +469,7 @@ const estimate = ref({
   hotels: props.initialData.hotels || [],
   tourDays: props.initialData.tourDays || [],
   optionalServices: props.initialData.optionalServices || [],
+  flights: props.initialData.flights || [],
   markup: props.initialData.markup || 0,
   currency: props.initialData.currency || 'USD',
   createdAt: props.initialData.createdAt || new Date().toISOString(),
@@ -460,6 +484,9 @@ watch(
   () => props.initialData,
   (newData) => {
     if (newData && Object.keys(newData).length > 0) {
+      // Сохраняем текущие рейсы, чтобы они не сбрасывались
+      const currentFlights = estimate.value.flights || []
+
       estimate.value = {
         id: newData.id || estimate.value.id,
         client: newData.client || '',
@@ -488,6 +515,7 @@ watch(
         hotels: newData.hotels || [],
         tourDays: newData.tourDays || [],
         optionalServices: newData.optionalServices || [],
+        flights: newData.flights || currentFlights, // Используем новые рейсы или сохраняем текущие
         markup: newData.markup || 0,
         currency: newData.currency || 'USD',
         createdAt: newData.createdAt || estimate.value.createdAt,
@@ -527,20 +555,68 @@ const isFormValid = computed(() => {
     estimate.value.location.cities?.length > 0 &&
     estimate.value.group.totalPax > 0 &&
     estimate.value.tourDays.length > 0
+    // Рейсы сделаны опциональными - смета может быть сохранена без рейсов
   )
 })
 
-// Используем CalculationService для всех расчетов
+// Используем CalculationService для всех расчетов с кэшированием
 const baseCost = computed(() => {
-  return CalculationService.calculateBaseCost(estimate.value)
+  // Кэшируем результат для оптимизации производительности
+  const cacheKey = JSON.stringify({
+    hotels: estimate.value.hotels,
+    tourDays: estimate.value.tourDays,
+    optionalServices: estimate.value.optionalServices,
+    flights: estimate.value.flights,
+    group: estimate.value.group,
+  })
+
+  console.log('baseCost computed - cacheKey:', cacheKey)
+  console.log('baseCost computed - flights in estimate:', estimate.value.flights)
+
+  if (!baseCost.cache || baseCost.cache.key !== cacheKey) {
+    const calculatedCost = CalculationService.calculateBaseCost(estimate.value)
+    console.log('baseCost computed - calculated cost:', calculatedCost)
+
+    baseCost.cache = {
+      key: cacheKey,
+      value: calculatedCost,
+    }
+  }
+
+  console.log('baseCost computed - returning:', baseCost.cache.value)
+  return baseCost.cache.value
 })
 
 const markupAmount = computed(() => {
-  return CalculationService.calculateMarkupAmount(estimate.value)
+  const cacheKey = JSON.stringify({
+    baseCost: baseCost.value,
+    markup: estimate.value.markup,
+  })
+
+  if (!markupAmount.cache || markupAmount.cache.key !== cacheKey) {
+    markupAmount.cache = {
+      key: cacheKey,
+      value: CalculationService.calculateMarkupAmount(estimate.value),
+    }
+  }
+
+  return markupAmount.cache.value
 })
 
 const finalCost = computed(() => {
-  return CalculationService.calculateFinalCost(estimate.value)
+  const cacheKey = JSON.stringify({
+    baseCost: baseCost.value,
+    markupAmount: markupAmount.value,
+  })
+
+  if (!finalCost.cache || finalCost.cache.key !== cacheKey) {
+    finalCost.cache = {
+      key: cacheKey,
+      value: CalculationService.calculateFinalCost(estimate.value),
+    }
+  }
+
+  return finalCost.cache.value
 })
 
 const commissionAmount = computed(() => {
@@ -554,17 +630,55 @@ const availableCurrencies = computed(() => {
 })
 
 const hotelsCost = computed(() => {
-  return estimate.value.hotels
-    .filter((hotel) => !hotel.isGuideHotel)
-    .reduce((sum, hotel) => {
-      return sum + CalculationService.calculateHotelTotal(hotel)
-    }, 0)
+  const cacheKey = JSON.stringify(estimate.value.hotels)
+
+  if (!hotelsCost.cache || hotelsCost.cache.key !== cacheKey) {
+    hotelsCost.cache = {
+      key: cacheKey,
+      value: estimate.value.hotels
+        .filter((hotel) => !hotel.isGuideHotel)
+        .reduce((sum, hotel) => {
+          return sum + CalculationService.calculateHotelTotal(hotel)
+        }, 0),
+    }
+  }
+
+  return hotelsCost.cache.value
 })
 
 const activitiesCost = computed(() => {
-  return estimate.value.tourDays.reduce((sum, day) => {
-    return sum + CalculationService.calculateDayTotal(day)
-  }, 0)
+  const cacheKey = JSON.stringify(estimate.value.tourDays)
+
+  if (!activitiesCost.cache || activitiesCost.cache.key !== cacheKey) {
+    activitiesCost.cache = {
+      key: cacheKey,
+      value: estimate.value.tourDays.reduce((sum, day) => {
+        return sum + CalculationService.calculateDayTotal(day)
+      }, 0),
+    }
+  }
+
+  return activitiesCost.cache.value
+})
+
+const flightsCost = computed(() => {
+  const cacheKey = JSON.stringify(estimate.value.flights)
+
+  console.log('flightsCost computed - flights:', estimate.value.flights)
+  console.log('flightsCost computed - cacheKey:', cacheKey)
+
+  if (!flightsCost.cache || flightsCost.cache.key !== cacheKey) {
+    const calculatedCost = CalculationService.calculateFlightsCost(estimate.value.flights)
+    console.log('flightsCost computed - calculated cost:', calculatedCost)
+
+    flightsCost.cache = {
+      key: cacheKey,
+      value: calculatedCost,
+    }
+  }
+
+  console.log('flightsCost computed - returning:', flightsCost.cache.value)
+  return flightsCost.cache.value
 })
 
 const transportCost = computed(() => {
@@ -593,32 +707,19 @@ function formatExchangeRate(currencyCode) {
 
 // Функция для запуска тестов расчетов
 function runCalculationTestsLocal() {
-  console.log('🧮 Запуск тестов математических расчетов...')
+  try {
+    console.log('🧮 Запуск комплексных тестов математических расчетов...')
 
-  // Сначала запускаем общие тесты
-  const testResults = runCalculationTests()
+    // Запускаем комплексные тесты
+    const testResults = runComprehensiveTests()
+    console.log('✅ Комплексные тесты выполнены:', testResults)
 
-  // Затем проверяем текущую смету
-  console.log('\n🔍 Проверка текущей сметы:')
-  const validationResults = validateEstimate(estimate.value)
-
-  // Выводим результаты в консоль
-  console.log('\n📊 Итоговые результаты:')
-  console.log(`✅ Тесты пройдено: ${testResults.passed}`)
-  console.log(`❌ Тесты провалено: ${testResults.failed}`)
-
-  if (validationResults.warnings.length > 0) {
-    console.log('⚠️ Предупреждения по текущей смете:')
-    validationResults.warnings.forEach((warning) => console.log(`  - ${warning}`))
+    // Показываем уведомление пользователю
+    toastStore.showSuccess('Комплексные тесты расчетов выполнены успешно!')
+  } catch (error) {
+    console.error('❌ Ошибка тестов расчетов:', error)
+    toastStore.showError('Ошибка выполнения тестов расчетов')
   }
-
-  // Показываем уведомление пользователю
-  const message =
-    testResults.failed > 0
-      ? `Найдено ${testResults.failed} проблем в расчетах!`
-      : 'Все расчеты корректны!'
-
-  alert(message)
 }
 
 // Функция для детальной диагностики математических проблем
@@ -724,11 +825,11 @@ function runMathDiagnostics() {
 }
 
 // Функция для запуска комплексного тестирования
-function runComprehensiveTests() {
+function runComprehensiveTestsLocal() {
   console.log('🧪 Запуск комплексного тестирования математических расчетов...')
 
   try {
-    const results = runComprehensiveMathTests()
+    const results = runComprehensiveTests()
 
     // Показываем уведомление пользователю
     const message =
@@ -782,6 +883,47 @@ function onOptionalServicesChange(change) {
   console.log('Optional services changed:', change)
 }
 
+function onAdjustmentsChanged(adjustments) {
+  console.log('Adjustments changed:', adjustments)
+  // Здесь можно обновить итоговую стоимость с учетом скидок и доплат
+}
+
+function onFlightAdded(flight) {
+  console.log('Flight added:', flight)
+  console.log('Current estimate flights:', estimate.value.flights)
+
+  // Обновляем смету с новым перелетом
+  const updatedEstimate = {
+    ...estimate.value,
+    flights: [...(estimate.value.flights || []), flight],
+  }
+
+  console.log('Updated estimate flights:', updatedEstimate.flights)
+  console.log('Updated estimate totalPrice:', updatedEstimate.totalPrice)
+
+  updateEstimate(updatedEstimate)
+}
+
+function onFlightRemoved(flightId) {
+  console.log('Flight removed:', flightId)
+  // Удаляем перелет из сметы
+  const updatedFlights = (estimate.value.flights || []).filter((f) => f.id !== flightId)
+  updateEstimate({
+    ...estimate.value,
+    flights: updatedFlights,
+  })
+}
+
+function updateEstimate(updatedEstimate) {
+  console.log('updateEstimate called with:', updatedEstimate)
+  console.log('Flights in updated estimate:', updatedEstimate.flights)
+
+  estimate.value = updatedEstimate
+
+  console.log('Estimate updated, new flights:', estimate.value.flights)
+  console.log('Estimate updated, new totalPrice:', estimate.value.totalPrice)
+}
+
 function onClientChange(event) {
   estimate.value.client = event.target.value
 }
@@ -818,10 +960,21 @@ function onCurrencyChange() {
   console.log('Currency changed:', estimate.value.currency)
 }
 
-function saveEstimate() {
+async function saveEstimate() {
+  // Используем nextTick для оптимизации производительности
+  await nextTick()
+
   if (!isFormValid.value) {
     alert('Пожалуйста, заполните все обязательные поля')
     return
+  }
+
+  // Проверяем наличие рейсов (опционально)
+  if (!estimate.value.flights || estimate.value.flights.length === 0) {
+    const confirmNoFlights = confirm('Рейсы не добавлены. Сохранить смету без рейсов?')
+    if (!confirmNoFlights) {
+      return
+    }
   }
 
   // Подготавливаем данные для API
@@ -865,17 +1018,25 @@ function previewEstimate() {
   emit('preview', estimateData)
 }
 
-// Автосохранение каждые 30 секунд
+// Автосохранение с дебаунсингом для оптимизации производительности
 let autoSaveInterval
+let autoSaveTimeout
+
 watch(
   estimate,
   () => {
+    // Очищаем предыдущие таймеры
     clearTimeout(autoSaveInterval)
-    autoSaveInterval = setTimeout(() => {
-      if (isFormValid.value) {
-        saveDraft()
-      }
-    }, 30000)
+    clearTimeout(autoSaveTimeout)
+
+    // Используем дебаунсинг для предотвращения частых сохранений
+    autoSaveTimeout = setTimeout(() => {
+      autoSaveInterval = setTimeout(() => {
+        if (isFormValid.value) {
+          saveDraft()
+        }
+      }, 60000) // Увеличиваем интервал до 60 секунд
+    }, 3000) // Увеличиваем задержку до 3 секунд
   },
   { deep: true },
 )
@@ -883,5 +1044,6 @@ watch(
 // Очистка при размонтировании
 onUnmounted(() => {
   clearTimeout(autoSaveInterval)
+  clearTimeout(autoSaveTimeout)
 })
 </script>

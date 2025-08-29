@@ -88,8 +88,12 @@ describe('CalculationService', () => {
     })
 
     it('should throw error for negative numbers', () => {
-      expect(() => CalculationService.validatePositiveNumber(-10, 'test')).toThrow('test cannot be negative: -10')
-      expect(() => CalculationService.validatePositiveNumber('-5', 'test')).toThrow('test cannot be negative: -5')
+      expect(() => CalculationService.validatePositiveNumber(-10, 'test')).toThrow(
+        'test cannot be negative: -10',
+      )
+      expect(() => CalculationService.validatePositiveNumber('-5', 'test')).toThrow(
+        'test cannot be negative: -5',
+      )
     })
   })
 
@@ -150,27 +154,23 @@ describe('CalculationService', () => {
         pricePerRoom: -250,
         nights: 3,
       }
-      expect(() => CalculationService.calculateHotelTotal(hotel)).toThrow('pricePerRoom cannot be negative: -250')
+      expect(() => CalculationService.calculateHotelTotal(hotel)).toThrow(
+        'pricePerRoom cannot be negative: -250',
+      )
     })
   })
 
   describe('calculateDayTotal', () => {
     it('should calculate day total correctly', () => {
       const day = {
-        activities: [
-          { cost: 120 },
-          { cost: 200 },
-        ],
+        activities: [{ cost: 120 }, { cost: 200 }],
       }
       expect(CalculationService.calculateDayTotal(day)).toBe(320)
     })
 
     it('should handle string values', () => {
       const day = {
-        activities: [
-          { cost: '120' },
-          { cost: '200' },
-        ],
+        activities: [{ cost: '120' }, { cost: '200' }],
       }
       expect(CalculationService.calculateDayTotal(day)).toBe(320)
     })
@@ -184,19 +184,12 @@ describe('CalculationService', () => {
 
   describe('calculateOptionalServicesCost', () => {
     it('should calculate services cost correctly', () => {
-      const services = [
-        { price: 80 },
-        { cost: 120 },
-      ]
+      const services = [{ price: 80 }, { cost: 120 }]
       expect(CalculationService.calculateOptionalServicesCost(services)).toBe(200)
     })
 
     it('should handle mixed price/cost fields', () => {
-      const services = [
-        { price: 100 },
-        { cost: 150 },
-        { price: 200 },
-      ]
+      const services = [{ price: 100 }, { cost: 150 }, { price: 200 }]
       expect(CalculationService.calculateOptionalServicesCost(services)).toBe(450)
     })
   })
@@ -224,7 +217,7 @@ describe('CalculationService', () => {
           },
         ],
       }
-      expect(CalculationService.calculateBaseCost(estimateWithOnlyGuideHotels)).toBe(320) // Only activities + services
+      expect(CalculationService.calculateBaseCost(estimateWithOnlyGuideHotels)).toBe(400) // Only activities + services (320 + 80)
     })
   })
 
@@ -240,7 +233,9 @@ describe('CalculationService', () => {
         ...testEstimate,
         group: { ...testEstimate.group, markup: 150 },
       }
-      expect(() => CalculationService.calculateMarkupAmount(estimateWithInvalidMarkup)).toThrow('Invalid markup percentage: 150. Must be between 0 and 100')
+      expect(() => CalculationService.calculateMarkupAmount(estimateWithInvalidMarkup)).toThrow(
+        'Invalid markup percentage: 150. Must be between 0 and 100',
+      )
     })
 
     it('should handle negative markup', () => {
@@ -248,7 +243,9 @@ describe('CalculationService', () => {
         ...testEstimate,
         group: { ...testEstimate.group, markup: -10 },
       }
-      expect(() => CalculationService.calculateMarkupAmount(estimateWithNegativeMarkup)).toThrow('Invalid markup percentage: -10. Must be between 0 and 100')
+      expect(() => CalculationService.calculateMarkupAmount(estimateWithNegativeMarkup)).toThrow(
+        'Invalid markup percentage: -10. Must be between 0 and 100',
+      )
     })
   })
 
@@ -278,9 +275,7 @@ describe('CalculationService', () => {
     it('should detect missing required fields', () => {
       const invalidEstimate = {
         group: { totalPax: 0 },
-        hotels: [
-          { name: '', paxCount: -5, pricePerRoom: -100 },
-        ],
+        hotels: [{ name: '', paxCount: -5, pricePerRoom: -100 }],
       }
       const errors = CalculationService.validateEstimate(invalidEstimate)
       expect(errors).toContain('Total passengers must be greater than 0')
