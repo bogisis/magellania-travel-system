@@ -1,16 +1,26 @@
 // src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
+import { authService } from '@/services/authService.js'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
+    {
+      path: '/login',
+      name: 'login',
+      component: () => import('@/views/LoginView.vue'),
+      meta: {
+        title: 'Вход в систему',
+        requiresAuth: false,
+      },
+    },
     {
       path: '/',
       name: 'dashboard',
       component: () => import('@/views/DashboardView.vue'),
       meta: {
         title: 'Панель управления',
-        requiresAuth: false,
+        requiresAuth: true,
       },
     },
     {
@@ -19,7 +29,7 @@ const router = createRouter({
       component: () => import('@/views/EstimatesView.vue'),
       meta: {
         title: 'Управление сметами',
-        requiresAuth: false,
+        requiresAuth: true,
       },
     },
     {
@@ -28,7 +38,7 @@ const router = createRouter({
       component: () => import('@/pages/EstimateCreatorPage.vue'),
       meta: {
         title: 'Создание сметы',
-        requiresAuth: false,
+        requiresAuth: true,
       },
     },
     {
@@ -38,7 +48,7 @@ const router = createRouter({
       props: true,
       meta: {
         title: 'Редактирование сметы',
-        requiresAuth: false,
+        requiresAuth: true,
       },
     },
     {
@@ -48,7 +58,7 @@ const router = createRouter({
       props: true,
       meta: {
         title: 'Детали сметы',
-        requiresAuth: false,
+        requiresAuth: true,
       },
     },
     {
@@ -57,7 +67,7 @@ const router = createRouter({
       component: () => import('@/views/ClientsView.vue'),
       meta: {
         title: 'Управление клиентами',
-        requiresAuth: false,
+        requiresAuth: true,
       },
     },
     {
@@ -66,7 +76,7 @@ const router = createRouter({
       component: () => import('@/views/ClientCreateView.vue'),
       meta: {
         title: 'Добавление клиента',
-        requiresAuth: false,
+        requiresAuth: true,
       },
     },
     {
@@ -75,7 +85,7 @@ const router = createRouter({
       component: () => import('@/views/SuppliersView.vue'),
       meta: {
         title: 'Управление поставщиками',
-        requiresAuth: false,
+        requiresAuth: true,
       },
     },
     {
@@ -84,7 +94,7 @@ const router = createRouter({
       component: () => import('@/views/TariffsView.vue'),
       meta: {
         title: 'Тарифная сетка',
-        requiresAuth: false,
+        requiresAuth: true,
       },
     },
     {
@@ -93,7 +103,7 @@ const router = createRouter({
       component: () => import('@/views/AnalyticsView.vue'),
       meta: {
         title: 'Аналитика и отчеты',
-        requiresAuth: false,
+        requiresAuth: true,
       },
     },
     {
@@ -139,7 +149,16 @@ router.beforeEach((to, from, next) => {
     document.title = `${to.meta.title} - MAGELLANIA Travel System`
   }
 
-  next()
+  // Проверка аутентификации
+  if (to.meta.requiresAuth && !authService.isAuthenticated()) {
+    // Если требуется аутентификация, но пользователь не авторизован
+    next('/login')
+  } else if (to.path === '/login' && authService.isAuthenticated()) {
+    // Если пользователь уже авторизован и пытается зайти на страницу входа
+    next('/')
+  } else {
+    next()
+  }
 })
 
 export default router

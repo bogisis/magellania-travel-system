@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">72.8% </span>
+                <span class="strong">72.95% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>182/250</span>
+                <span class='fraction'>178/244</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">72.8% </span>
+                <span class="strong">72.95% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>182/250</span>
+                <span class='fraction'>178/244</span>
             </div>
         
             
@@ -364,15 +364,7 @@
 <a name='L299'></a><a href='#L299'>299</a>
 <a name='L300'></a><a href='#L300'>300</a>
 <a name='L301'></a><a href='#L301'>301</a>
-<a name='L302'></a><a href='#L302'>302</a>
-<a name='L303'></a><a href='#L303'>303</a>
-<a name='L304'></a><a href='#L304'>304</a>
-<a name='L305'></a><a href='#L305'>305</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<a name='L302'></a><a href='#L302'>302</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -404,6 +396,8 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -493,10 +487,6 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -603,7 +593,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -645,7 +635,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -665,7 +655,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
@@ -676,12 +670,7 @@
     &lt;!-- Заголовок --&gt;
     &lt;div class="flex items-center justify-between"&gt;
       &lt;h3 class="text-lg font-medium text-gray-900"&gt;Опциональные услуги&lt;/h3&gt;
-      &lt;BaseButton 
-        variant="outline" 
-        size="sm" 
-        @click="addService"
-        :icon="Plus"
-      &gt;
+      &lt;BaseButton variant="outline" size="sm" @click="addService" :icon="Plus"&gt;
         Добавить услугу
       &lt;/BaseButton&gt;
     &lt;/div&gt;
@@ -693,21 +682,23 @@
         &lt;span class="text-sm font-medium text-blue-900"&gt;Информация&lt;/span&gt;
       &lt;/div&gt;
       &lt;p class="text-sm text-blue-700"&gt;
-        Опциональные услуги не включаются в общие расходы по умолчанию. 
-        Вы можете перенести услугу в смету, выбрав соответствующий день.
+        Опциональные услуги не включаются в общие расходы по умолчанию. Вы можете перенести услугу в
+        смету, выбрав соответствующий день.
       &lt;/p&gt;
     &lt;/div&gt;
 &nbsp;
     &lt;!-- Список опциональных услуг --&gt;
     &lt;div class="space-y-4"&gt;
-      &lt;div 
-        v-for="(service, index) in optionalServices" 
+      &lt;div
+        v-for="(service, index) in optionalServices"
         :key="service.id"
         class="border border-gray-200 rounded-lg p-4 hover:border-primary-300 transition-colors"
       &gt;
         &lt;div class="flex items-center justify-between mb-4"&gt;
           &lt;div class="flex items-center space-x-3"&gt;
-            &lt;div class="w-8 h-8 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-sm font-medium"&gt;
+            &lt;div
+              class="w-8 h-8 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-sm font-medium"
+            &gt;
               {{ index + 1 }}
             &lt;/div&gt;
             &lt;div&gt;
@@ -720,9 +711,9 @@
             &lt;span class="text-sm font-medium text-gray-900"&gt;
               {{ formatCurrency(service.price) }}
             &lt;/span&gt;
-            &lt;BaseButton 
-              variant="ghost" 
-              size="sm" 
+            &lt;BaseButton
+              variant="ghost"
+              size="sm"
               @click="removeService(service.id)"
               :icon="Trash2"
               class="text-red-600 hover:text-red-700"
@@ -747,7 +738,7 @@
           &lt;!-- Категория --&gt;
           &lt;div&gt;
             &lt;label class="form-label"&gt;Категория&lt;/label&gt;
-            &lt;select 
+            &lt;select
               v-model="service.category"
               class="form-input"
               @change="updateService(service.id, 'category', $event.target.value)"
@@ -792,27 +783,23 @@
           &lt;div class="flex items-center justify-between"&gt;
             &lt;div class="flex items-center space-x-2"&gt;
               &lt;span class="text-sm font-medium text-gray-700"&gt;Перенести в смету:&lt;/span&gt;
-              &lt;select 
+              &lt;select
                 v-model="service.targetDay"
                 class="form-input text-sm"
                 @change="updateService(service.id, 'targetDay', $event.target.value)"
               &gt;
                 &lt;option value=""&gt;Не переносить&lt;/option&gt;
-                &lt;option 
-                  v-for="day in availableDays" 
-                  :key="day.id" 
-                  :value="day.id"
-                &gt;
+                &lt;option v-for="day in availableDays" :key="day.id" :value="day.id"&gt;
                   День {{ day.dayNumber }} - {{ day.title }}
                 &lt;/option&gt;
               &lt;/select&gt;
             &lt;/div&gt;
 &nbsp;
             &lt;div class="flex items-center space-x-2"&gt;
-              &lt;BaseButton 
+              &lt;BaseButton
                 v-if="service.targetDay"
-                variant="outline" 
-                size="sm" 
+                variant="outline"
+                size="sm"
                 @click="moveToEstimate(service)"
                 :icon="ArrowRight"
               &gt;
@@ -863,12 +850,12 @@ import BaseInput from '@/components/common/BaseInput.vue'
 const props = defineProps({
   modelValue: {
     type: Array,
-    default: () =&gt; []
+    default: () =&gt; [],
   },
   tourDays: {
     type: Array,
-    default: () =&gt; []
-  }
+    default: () =&gt; [],
+  },
 })
 &nbsp;
 const emit = defineEmits(['update:modelValue', 'change', 'moveToEstimate'])
@@ -881,16 +868,16 @@ const availableDays = computed(() =&gt; {
 <span class="cstat-no" title="statement not covered" >  return props.tourDays.map((day, index) =&gt; ({</span>
 <span class="cstat-no" title="statement not covered" >    id: day.id,</span>
 <span class="cstat-no" title="statement not covered" >    dayNumber: index + 1,</span>
-<span class="cstat-no" title="statement not covered" >    title: day.title || `День ${index + 1}`</span>
+<span class="cstat-no" title="statement not covered" >    title: day.title || `День ${index + 1}`,</span>
 <span class="cstat-no" title="statement not covered" >  }))</span>
 <span class="cstat-no" title="statement not covered" >})</span>
 &nbsp;
 const totalCost = computed(() =&gt; {
-<span class="cstat-no" title="statement not covered" >  return optionalServices.value.reduce((sum, service) =&gt; sum + service.price, 0)</span>
+<span class="cstat-no" title="statement not covered" >  return optionalServices.value.reduce((sum, service) =&gt; sum + Number(service.price || 0), 0)</span>
 <span class="cstat-no" title="statement not covered" >})</span>
 &nbsp;
 const readyToMoveCount = computed(() =&gt; {
-<span class="cstat-no" title="statement not covered" >  return optionalServices.value.filter(service =&gt; service.targetDay).length</span>
+<span class="cstat-no" title="statement not covered" >  return optionalServices.value.filter((service) =&gt; service.targetDay).length</span>
 <span class="cstat-no" title="statement not covered" >})</span>
 &nbsp;
 // Методы
@@ -905,32 +892,32 @@ const addService = <span class="fstat-no" title="function not covered" >() =&gt;
 <span class="cstat-no" title="statement not covered" >    category: '',</span>
 <span class="cstat-no" title="statement not covered" >    price: 0,</span>
 <span class="cstat-no" title="statement not covered" >    description: '',</span>
-<span class="cstat-no" title="statement not covered" >    targetDay: ''</span>
+<span class="cstat-no" title="statement not covered" >    targetDay: '',</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
-<span class="cstat-no" title="statement not covered" >  </span>
+&nbsp;
 <span class="cstat-no" title="statement not covered" >  optionalServices.value.push(newService)</span>
 <span class="cstat-no" title="statement not covered" >  updateModelValue()</span>
 <span class="cstat-no" title="statement not covered" >  emit('change', {</span>
 <span class="cstat-no" title="statement not covered" >    type: 'add',</span>
-<span class="cstat-no" title="statement not covered" >    service: newService</span>
+<span class="cstat-no" title="statement not covered" >    service: newService,</span>
 <span class="cstat-no" title="statement not covered" >  })</span>
 <span class="cstat-no" title="statement not covered" >}</span>
 &nbsp;
 const removeService = <span class="fstat-no" title="function not covered" >(serviceId) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  const index = optionalServices.value.findIndex(service =&gt; service.id === serviceId)</span>
+<span class="cstat-no" title="statement not covered" >  const index = optionalServices.value.findIndex((service) =&gt; service.id === serviceId)</span>
 <span class="cstat-no" title="statement not covered" >  if (index !== -1) {</span>
 <span class="cstat-no" title="statement not covered" >    const removedService = optionalServices.value[index]</span>
 <span class="cstat-no" title="statement not covered" >    optionalServices.value.splice(index, 1)</span>
 <span class="cstat-no" title="statement not covered" >    updateModelValue()</span>
 <span class="cstat-no" title="statement not covered" >    emit('change', {</span>
 <span class="cstat-no" title="statement not covered" >      type: 'remove',</span>
-<span class="cstat-no" title="statement not covered" >      service: removedService</span>
+<span class="cstat-no" title="statement not covered" >      service: removedService,</span>
 <span class="cstat-no" title="statement not covered" >    })</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
 <span class="cstat-no" title="statement not covered" >}</span>
 &nbsp;
 const updateService = <span class="fstat-no" title="function not covered" >(serviceId, field, value) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  const service = optionalServices.value.find(s =&gt; s.id === serviceId)</span>
+<span class="cstat-no" title="statement not covered" >  const service = optionalServices.value.find((s) =&gt; s.id === serviceId)</span>
 <span class="cstat-no" title="statement not covered" >  if (service) {</span>
 <span class="cstat-no" title="statement not covered" >    service[field] = value</span>
 <span class="cstat-no" title="statement not covered" >    updateModelValue()</span>
@@ -938,7 +925,7 @@ const updateService = <span class="fstat-no" title="function not covered" >(serv
 <span class="cstat-no" title="statement not covered" >      type: 'update',</span>
 <span class="cstat-no" title="statement not covered" >      serviceId,</span>
 <span class="cstat-no" title="statement not covered" >      field,</span>
-<span class="cstat-no" title="statement not covered" >      value</span>
+<span class="cstat-no" title="statement not covered" >      value,</span>
 <span class="cstat-no" title="statement not covered" >    })</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
 <span class="cstat-no" title="statement not covered" >}</span>
@@ -947,9 +934,9 @@ const moveToEstimate = <span class="fstat-no" title="function not covered" >(ser
 <span class="cstat-no" title="statement not covered" >  if (service.targetDay) {</span>
 <span class="cstat-no" title="statement not covered" >    emit('moveToEstimate', {</span>
 <span class="cstat-no" title="statement not covered" >      service,</span>
-<span class="cstat-no" title="statement not covered" >      targetDay: service.targetDay</span>
+<span class="cstat-no" title="statement not covered" >      targetDay: service.targetDay,</span>
 <span class="cstat-no" title="statement not covered" >    })</span>
-<span class="cstat-no" title="statement not covered" >    </span>
+&nbsp;
 <span class="cstat-no" title="statement not covered" >    // Очищаем выбор дня после переноса</span>
 <span class="cstat-no" title="statement not covered" >    service.targetDay = ''</span>
 <span class="cstat-no" title="statement not covered" >    updateModelValue()</span>
@@ -959,7 +946,7 @@ const moveToEstimate = <span class="fstat-no" title="function not covered" >(ser
 const formatCurrency = <span class="fstat-no" title="function not covered" >(amount) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  return new Intl.NumberFormat('en-US', {</span>
 <span class="cstat-no" title="statement not covered" >    style: 'currency',</span>
-<span class="cstat-no" title="statement not covered" >    currency: 'USD'</span>
+<span class="cstat-no" title="statement not covered" >    currency: 'USD',</span>
 <span class="cstat-no" title="statement not covered" >  }).format(amount || 0)</span>
 <span class="cstat-no" title="statement not covered" >}</span>
 &nbsp;
@@ -968,9 +955,13 @@ const updateModelValue = () =&gt; {
 }
 &nbsp;
 // Следим за изменениями props
-watch(() =&gt; props.modelValue, <span class="fstat-no" title="function not covered" >(newValue) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  optionalServices.value = newValue || []</span>
-}, { deep: true })
+watch(
+  () =&gt; props.modelValue,
+<span class="fstat-no" title="function not covered" >  (newValue) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    optionalServices.value = newValue || []</span>
+  },
+  { deep: true },
+)
 &nbsp;
 // Инициализация при монтировании
 updateModelValue()
@@ -982,7 +973,7 @@ updateModelValue()
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-28T05:23:28.268Z
+                at 2025-08-28T17:43:58.686Z
             </div>
         <script src="../../../../prettify.js"></script>
         <script>

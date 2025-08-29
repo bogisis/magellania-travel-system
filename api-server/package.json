@@ -20,6 +20,9 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^4.19.2",
+    "joi": "^17.12.2",
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^2.4.3",
     "sqlite3": "^5.1.7"
   },
   "devDependencies": {

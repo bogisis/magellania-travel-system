@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { CalculationService } from '@/services/CalculationService.js'
 import Papa from 'papaparse'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
@@ -30,30 +31,7 @@ export const useEstimateStore = defineStore('estimate', () => {
     const estimate = getEstimateById.value(estimateId)
     if (!estimate) return 0
 
-    const hotelsCost =
-      estimate.hotels
-        ?.filter((hotel) => !hotel.isGuideHotel)
-        .reduce((sum, hotel) => {
-          const rooms =
-            hotel.accommodationType === 'double' ? Math.ceil(hotel.paxCount / 2) : hotel.paxCount
-          return sum + rooms * hotel.pricePerRoom * hotel.nights
-        }, 0) || 0
-
-    const activitiesCost =
-      estimate.tourDays?.reduce((sum, day) => {
-        return (
-          sum +
-          (day.activities?.reduce((daySum, activity) => daySum + (activity.cost || 0), 0) || 0)
-        )
-      }, 0) || 0
-
-    const optionalServicesCost =
-      estimate.optionalServices?.reduce((sum, service) => sum + service.price, 0) || 0
-
-    const baseCost = hotelsCost + activitiesCost + optionalServicesCost
-    const markupAmount = (baseCost * estimate.markup) / 100
-
-    return baseCost + markupAmount
+    return CalculationService.calculateFinalCost(estimate)
   })
 
   // Actions
@@ -366,38 +344,15 @@ export const useEstimateStore = defineStore('estimate', () => {
   }
 
   function calculateBaseCost(estimateData) {
-    const hotelsCost =
-      estimateData.hotels
-        ?.filter((hotel) => !hotel.isGuideHotel)
-        .reduce((sum, hotel) => {
-          const rooms =
-            hotel.accommodationType === 'double' ? Math.ceil(hotel.paxCount / 2) : hotel.paxCount
-          return sum + rooms * hotel.pricePerRoom * hotel.nights
-        }, 0) || 0
-
-    const activitiesCost =
-      estimateData.tourDays?.reduce((sum, day) => {
-        return (
-          sum +
-          (day.activities?.reduce((daySum, activity) => daySum + (activity.cost || 0), 0) || 0)
-        )
-      }, 0) || 0
-
-    const optionalServicesCost =
-      estimateData.optionalServices?.reduce((sum, service) => sum + service.price, 0) || 0
-
-    return hotelsCost + activitiesCost + optionalServicesCost
+    return CalculationService.calculateBaseCost(estimateData)
   }
 
   function calculateMarkupAmount(estimateData) {
-    const baseCost = calculateBaseCost(estimateData)
-    return (baseCost * estimateData.markup) / 100
+    return CalculationService.calculateMarkupAmount(estimateData)
   }
 
   function calculateFinalCost(estimateData) {
-    const baseCost = calculateBaseCost(estimateData)
-    const markupAmount = calculateMarkupAmount(estimateData)
-    return baseCost + markupAmount
+    return CalculationService.calculateFinalCost(estimateData)
   }
 
   function generateId() {

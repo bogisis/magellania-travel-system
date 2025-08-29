@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/109</span>
+                <span class='fraction'>0/106</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/109</span>
+                <span class='fraction'>0/106</span>
             </div>
         
             
@@ -184,7 +184,9 @@
 <a name='L119'></a><a href='#L119'>119</a>
 <a name='L120'></a><a href='#L120'>120</a>
 <a name='L121'></a><a href='#L121'>121</a>
-<a name='L122'></a><a href='#L122'>122</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L122'></a><a href='#L122'>122</a>
+<a name='L123'></a><a href='#L123'>123</a>
+<a name='L124'></a><a href='#L124'>124</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -220,6 +222,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -228,6 +231,8 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -243,23 +248,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -284,6 +273,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -297,6 +287,20 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -307,7 +311,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >import { defineStore } from 'pinia'</span></span></span>
 import { ref, computed } from 'vue'
-import { db } from '@/services/database.js'
+import { apiService } from '@/services/apiService.js'
 &nbsp;
 <span class="cstat-no" title="statement not covered" >export const useClientsStore = defineStore('clients', () =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  const clients = ref([])</span>
@@ -317,8 +321,8 @@ import { db } from '@/services/database.js'
 <span class="cstat-no" title="statement not covered" >  // Computed свойства</span>
 <span class="cstat-no" title="statement not covered" >  const clientsByType = computed(() =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    return {</span>
-<span class="cstat-no" title="statement not covered" >      b2c: clients.value.filter(client =&gt; client.type === 'b2c'),</span>
-<span class="cstat-no" title="statement not covered" >      b2b: clients.value.filter(client =&gt; client.type === 'b2b')</span>
+<span class="cstat-no" title="statement not covered" >      b2c: clients.value.filter((client) =&gt; client.type === 'b2c'),</span>
+<span class="cstat-no" title="statement not covered" >      b2b: clients.value.filter((client) =&gt; client.type === 'b2b'),</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
 <span class="cstat-no" title="statement not covered" >  })</span>
 &nbsp;
@@ -333,20 +337,20 @@ import { db } from '@/services/database.js'
 <span class="cstat-no" title="statement not covered" >  })</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  const totalClients = computed(() =&gt; clients.value.length)</span>
-<span class="cstat-no" title="statement not covered" >  const newClientsCount = computed(() =&gt; </span>
-<span class="cstat-no" title="statement not covered" >    clients.value.filter(client =&gt; client.segment === 'new').length</span>
+<span class="cstat-no" title="statement not covered" >  const newClientsCount = computed(</span>
+<span class="cstat-no" title="statement not covered" >    () =&gt; clients.value.filter((client) =&gt; client.segment === 'new').length,</span>
 <span class="cstat-no" title="statement not covered" >  )</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  // Действия</span>
 <span class="cstat-no" title="statement not covered" >  async function fetchClients() {</span>
 <span class="cstat-no" title="statement not covered" >    loading.value = true</span>
 <span class="cstat-no" title="statement not covered" >    error.value = null</span>
-<span class="cstat-no" title="statement not covered" >    </span>
+&nbsp;
 <span class="cstat-no" title="statement not covered" >    try {</span>
-<span class="cstat-no" title="statement not covered" >      clients.value = await db.clients.orderBy('createdAt').reverse().toArray()</span>
+<span class="cstat-no" title="statement not covered" >      clients.value = await apiService.getClients()</span>
 <span class="cstat-no" title="statement not covered" >    } catch (err) {</span>
 <span class="cstat-no" title="statement not covered" >      error.value = 'Ошибка загрузки клиентов'</span>
-<span class="cstat-no" title="statement not covered" >      console.error(err)</span>
+<span class="cstat-no" title="statement not covered" >      console.error('Error: Не удалось получить клиентов:', err.message)</span>
 <span class="cstat-no" title="statement not covered" >    } finally {</span>
 <span class="cstat-no" title="statement not covered" >      loading.value = false</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
@@ -354,16 +358,14 @@ import { db } from '@/services/database.js'
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  async function createClient(clientData) {</span>
 <span class="cstat-no" title="statement not covered" >    loading.value = true</span>
-<span class="cstat-no" title="statement not covered" >    </span>
+&nbsp;
 <span class="cstat-no" title="statement not covered" >    try {</span>
-<span class="cstat-no" title="statement not covered" >      const clientId = await db.clients.add(clientData)</span>
-<span class="cstat-no" title="statement not covered" >      const newClient = await db.clients.get(clientId)</span>
-<span class="cstat-no" title="statement not covered" >      </span>
+<span class="cstat-no" title="statement not covered" >      const newClient = await apiService.createClient(clientData)</span>
 <span class="cstat-no" title="statement not covered" >      clients.value.unshift(newClient)</span>
-<span class="cstat-no" title="statement not covered" >      return clientId</span>
+<span class="cstat-no" title="statement not covered" >      return newClient.id</span>
 <span class="cstat-no" title="statement not covered" >    } catch (err) {</span>
 <span class="cstat-no" title="statement not covered" >      error.value = 'Ошибка создания клиента'</span>
-<span class="cstat-no" title="statement not covered" >      console.error(err)</span>
+<span class="cstat-no" title="statement not covered" >      console.error('Error: Не удалось создать клиента:', err.message)</span>
 <span class="cstat-no" title="statement not covered" >      throw err</span>
 <span class="cstat-no" title="statement not covered" >    } finally {</span>
 <span class="cstat-no" title="statement not covered" >      loading.value = false</span>
@@ -372,36 +374,40 @@ import { db } from '@/services/database.js'
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  async function updateClient(id, updates) {</span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
-<span class="cstat-no" title="statement not covered" >      await db.clients.update(id, updates)</span>
-<span class="cstat-no" title="statement not covered" >      </span>
-<span class="cstat-no" title="statement not covered" >      const index = clients.value.findIndex(client =&gt; client.id === id)</span>
+<span class="cstat-no" title="statement not covered" >      const updatedClient = await apiService.updateClient(id, updates)</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >      const index = clients.value.findIndex((client) =&gt; client.id === id)</span>
 <span class="cstat-no" title="statement not covered" >      if (index !== -1) {</span>
-<span class="cstat-no" title="statement not covered" >        clients.value[index] = { ...clients.value[index], ...updates }</span>
+<span class="cstat-no" title="statement not covered" >        clients.value[index] = updatedClient</span>
 <span class="cstat-no" title="statement not covered" >      }</span>
 <span class="cstat-no" title="statement not covered" >    } catch (err) {</span>
 <span class="cstat-no" title="statement not covered" >      error.value = 'Ошибка обновления клиента'</span>
-<span class="cstat-no" title="statement not covered" >      console.error(err)</span>
+<span class="cstat-no" title="statement not covered" >      console.error('Error: Не удалось обновить клиента:', err.message)</span>
 <span class="cstat-no" title="statement not covered" >      throw err</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  async function deleteClient(id) {</span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
-<span class="cstat-no" title="statement not covered" >      await db.clients.delete(id)</span>
-<span class="cstat-no" title="statement not covered" >      clients.value = clients.value.filter(client =&gt; client.id !== id)</span>
+<span class="cstat-no" title="statement not covered" >      await apiService.deleteClient(id)</span>
+<span class="cstat-no" title="statement not covered" >      clients.value = clients.value.filter((client) =&gt; client.id !== id)</span>
 <span class="cstat-no" title="statement not covered" >    } catch (err) {</span>
 <span class="cstat-no" title="statement not covered" >      error.value = 'Ошибка удаления клиента'</span>
-<span class="cstat-no" title="statement not covered" >      console.error(err)</span>
+<span class="cstat-no" title="statement not covered" >      console.error('Error: Не удалось удалить клиента:', err.message)</span>
 <span class="cstat-no" title="statement not covered" >      throw err</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  async function searchClients(query) {</span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
-<span class="cstat-no" title="statement not covered" >      return await db.searchClients(query)</span>
+<span class="cstat-no" title="statement not covered" >      // Простой поиск по имени клиента</span>
+<span class="cstat-no" title="statement not covered" >      const allClients = await apiService.getClients()</span>
+<span class="cstat-no" title="statement not covered" >      return allClients.filter(</span>
+<span class="cstat-no" title="statement not covered" >        (client) =&gt; client.name &amp;&amp; client.name.toLowerCase().includes(query.toLowerCase()),</span>
+<span class="cstat-no" title="statement not covered" >      )</span>
 <span class="cstat-no" title="statement not covered" >    } catch (err) {</span>
 <span class="cstat-no" title="statement not covered" >      error.value = 'Ошибка поиска клиентов'</span>
-<span class="cstat-no" title="statement not covered" >      console.error(err)</span>
+<span class="cstat-no" title="statement not covered" >      console.error('Error: Не удалось найти клиентов:', err.message)</span>
 <span class="cstat-no" title="statement not covered" >      return []</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
@@ -411,19 +417,19 @@ import { db } from '@/services/database.js'
 <span class="cstat-no" title="statement not covered" >    clients,</span>
 <span class="cstat-no" title="statement not covered" >    loading,</span>
 <span class="cstat-no" title="statement not covered" >    error,</span>
-<span class="cstat-no" title="statement not covered" >    </span>
+&nbsp;
 <span class="cstat-no" title="statement not covered" >    // Getters</span>
 <span class="cstat-no" title="statement not covered" >    clientsByType,</span>
 <span class="cstat-no" title="statement not covered" >    clientsBySegment,</span>
 <span class="cstat-no" title="statement not covered" >    totalClients,</span>
 <span class="cstat-no" title="statement not covered" >    newClientsCount,</span>
-<span class="cstat-no" title="statement not covered" >    </span>
+&nbsp;
 <span class="cstat-no" title="statement not covered" >    // Actions</span>
 <span class="cstat-no" title="statement not covered" >    fetchClients,</span>
 <span class="cstat-no" title="statement not covered" >    createClient,</span>
 <span class="cstat-no" title="statement not covered" >    updateClient,</span>
 <span class="cstat-no" title="statement not covered" >    deleteClient,</span>
-<span class="cstat-no" title="statement not covered" >    searchClients</span>
+<span class="cstat-no" title="statement not covered" >    searchClients,</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
 <span class="cstat-no" title="statement not covered" >})</span>
 &nbsp;</pre></td></tr></table></pre>
@@ -433,7 +439,7 @@ import { db } from '@/services/database.js'
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-28T05:23:28.268Z
+                at 2025-08-28T17:43:58.686Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

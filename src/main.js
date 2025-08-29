@@ -2,7 +2,7 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import router from './router'
-import { initializeSimpleDatabase } from './services/database-simple.js'
+// import { initializeSimpleDatabase } from './services/database-simple.js'
 import { ErrorHandler } from './services/errorHandler.js'
 import ToastContainer from './components/common/ToastContainer.vue'
 
@@ -63,9 +63,9 @@ async function initApp() {
   try {
     console.log('🚀 Инициализация MAGELLANIA Travel System...')
 
-    // Инициализация упрощенной базы данных
-    await initializeSimpleDatabase()
-    console.log('✅ База данных инициализирована')
+    // Инициализация упрощенной базы данных отключена
+    // await initializeSimpleDatabase()
+    console.log('🔧 Режим разработки: API сервер')
 
     // Монтирование приложения
     app.mount('#app')

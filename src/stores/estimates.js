@@ -1,10 +1,11 @@
 // src/stores/estimates.js
+// Store только для управления состоянием смет
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { apiService } from '@/services/apiService.js'
-import { ErrorHandler, ErrorTypes } from '@/services/errorHandler.js'
-import { validate, validationSchemas } from '@/utils/validation.js'
+import { EstimateService } from '@/services/EstimateService.js'
+import { EstimateRepository } from '@/services/EstimateRepository.js'
+import { ErrorHandler } from '@/services/errorHandler.js'
 import { useToastStore } from '@/stores/toastStore.js'
 
 export const useEstimatesStore = defineStore('estimates', () => {
@@ -13,7 +14,6 @@ export const useEstimatesStore = defineStore('estimates', () => {
   const currentEstimate = ref(null)
   const isLoading = ref(false)
   const error = ref(null)
-  const validationErrors = ref({})
 
   // Вычисляемые свойства
   const estimatesCount = computed(() => estimates.value.length)
@@ -47,148 +47,162 @@ export const useEstimatesStore = defineStore('estimates', () => {
     return totalRevenue.value / estimates.value.length
   })
 
-  // Действия
-  const loadEstimates = async () => {
-    isLoading.value = true
+  // Действия - только управление состоянием
+  const setEstimates = (newEstimates) => {
+    estimates.value = newEstimates
+  }
+
+  const addEstimate = (estimate) => {
+    estimates.value.unshift(estimate)
+  }
+
+  const updateEstimateInStore = (updatedEstimate) => {
+    const index = estimates.value.findIndex((est) => est.id === updatedEstimate.id)
+    if (index !== -1) {
+      estimates.value[index] = updatedEstimate
+    }
+  }
+
+  const removeEstimate = (estimateId) => {
+    estimates.value = estimates.value.filter((est) => est.id !== estimateId)
+  }
+
+  const setCurrentEstimate = (estimate) => {
+    currentEstimate.value = estimate
+  }
+
+  const setLoading = (loading) => {
+    isLoading.value = loading
+  }
+
+  const setError = (errorMessage) => {
+    error.value = errorMessage
+  }
+
+  const clearError = () => {
     error.value = null
+  }
+
+  // Бизнес-логика делегируется сервисам
+  const loadEstimates = async () => {
+    setLoading(true)
+    clearError()
 
     try {
-      const loadedEstimates = await apiService.getEstimates()
-      estimates.value = loadedEstimates
+      const loadedEstimates = await EstimateRepository.getAll()
+      setEstimates(loadedEstimates)
     } catch (err) {
-      error.value = 'Ошибка загрузки смет: ' + err.message
+      setError('Ошибка загрузки смет: ' + err.message)
       ErrorHandler.handle(err, 'estimates-load')
     } finally {
-      isLoading.value = false
+      setLoading(false)
     }
   }
 
   const createEstimate = async (estimateData) => {
-    isLoading.value = true
-    error.value = null
-    validationErrors.value = {}
+    setLoading(true)
+    clearError()
 
     try {
-      // Временно отключаем валидацию для создания
-      // TODO: Создать отдельную схему валидации для создания сметы
-      console.log('Создание сметы:', estimateData)
+      // Бизнес-логика в EstimateService
+      const processedData = await EstimateService.create(estimateData)
+      const newEstimate = await EstimateRepository.create(processedData)
 
-      // Создание сметы через API
-      const newEstimate = await apiService.createEstimate(estimateData)
-
-      // Добавляем в список
-      estimates.value.unshift(newEstimate)
-      currentEstimate.value = newEstimate
+      addEstimate(newEstimate)
+      setCurrentEstimate(newEstimate)
 
       const toastStore = useToastStore()
       toastStore.showSuccess('Смета создана: Новая смета успешно создана')
 
       return newEstimate
     } catch (err) {
-      error.value = 'Ошибка создания сметы: ' + err.message
+      setError('Ошибка создания сметы: ' + err.message)
       ErrorHandler.handle(err, 'estimate-create', {
         additionalData: { estimateData },
       })
       throw err
     } finally {
-      isLoading.value = false
+      setLoading(false)
     }
   }
 
   const updateEstimate = async (estimateId, updates) => {
-    isLoading.value = true
-    error.value = null
-    validationErrors.value = {}
+    setLoading(true)
+    clearError()
 
     try {
-      // Временно отключаем валидацию для обновления
-      // TODO: Создать отдельную схему валидации для обновления сметы
-      console.log('Обновление сметы:', estimateId, updates)
+      // Бизнес-логика в EstimateService
+      const processedUpdates = await EstimateService.update(estimateId, updates)
+      const updatedEstimate = await EstimateRepository.update(estimateId, processedUpdates)
 
-      // Обновление через API
-      const updatedEstimate = await apiService.updateEstimate(estimateId, {
-        ...updates,
-        updatedAt: new Date(),
-      })
-
-      // Обновляем локальный список
-      const index = estimates.value.findIndex((est) => est.id === estimateId)
-      if (index >= 0) {
-        estimates.value[index] = { ...estimates.value[index], ...updates }
-      }
+      updateEstimateInStore(updatedEstimate)
 
       // Обновляем текущую смету, если она активна
       if (currentEstimate.value && currentEstimate.value.id === estimateId) {
-        currentEstimate.value = { ...currentEstimate.value, ...updates }
+        setCurrentEstimate(updatedEstimate)
       }
 
       const toastStore = useToastStore()
       toastStore.showSuccess('Смета обновлена: Изменения сохранены')
 
-      return estimates.value[index]
+      return updatedEstimate
     } catch (err) {
-      error.value = 'Ошибка обновления сметы: ' + err.message
+      setError('Ошибка обновления сметы: ' + err.message)
       ErrorHandler.handle(err, 'estimate-update', {
         additionalData: { estimateId, updates },
       })
       throw err
     } finally {
-      isLoading.value = false
+      setLoading(false)
     }
   }
 
   const deleteEstimate = async (estimateId) => {
-    isLoading.value = true
-    error.value = null
+    setLoading(true)
+    clearError()
 
     try {
-      // Удаление через API
-      await apiService.deleteEstimate(estimateId)
-
-      // Удаляем из локального списка
-      const index = estimates.value.findIndex((est) => est.id === estimateId)
-      if (index >= 0) {
-        estimates.value.splice(index, 1)
-      }
+      await EstimateRepository.delete(estimateId)
+      removeEstimate(estimateId)
 
       // Сбрасываем текущую смету, если она была удалена
       if (currentEstimate.value && currentEstimate.value.id === estimateId) {
-        currentEstimate.value = null
+        setCurrentEstimate(null)
       }
 
       const toastStore = useToastStore()
       toastStore.showSuccess('Смета удалена: Смета успешно удалена')
     } catch (err) {
-      error.value = 'Ошибка удаления сметы: ' + err.message
+      setError('Ошибка удаления сметы: ' + err.message)
       ErrorHandler.handle(err, 'estimate-delete', {
         additionalData: { estimateId },
       })
       throw err
     } finally {
-      isLoading.value = false
+      setLoading(false)
     }
   }
 
   const loadEstimate = async (estimateId) => {
-    isLoading.value = true
-    error.value = null
+    setLoading(true)
+    clearError()
 
     try {
-      const estimate = await apiService.getEstimate(estimateId)
+      const estimate = await EstimateRepository.getById(estimateId)
       if (!estimate) {
         throw new Error('Смета не найдена')
       }
 
-      currentEstimate.value = estimate
+      setCurrentEstimate(estimate)
       return estimate
     } catch (err) {
-      error.value = 'Ошибка загрузки сметы: ' + err.message
+      setError('Ошибка загрузки сметы: ' + err.message)
       ErrorHandler.handle(err, 'estimate-load', {
         additionalData: { estimateId },
       })
       throw err
     } finally {
-      isLoading.value = false
+      setLoading(false)
     }
   }
 
@@ -255,24 +269,8 @@ export const useEstimatesStore = defineStore('estimates', () => {
 
   const duplicateEstimate = async (estimateId) => {
     try {
-      const originalEstimate = estimates.value.find((est) => est.id === estimateId)
-      if (!originalEstimate) {
-        throw new Error('Смета не найдена')
-      }
-
-      // Создаем копию с новым именем
-      const duplicateData = {
-        ...originalEstimate,
-        name: `${originalEstimate.name} (копия)`,
-        status: 'draft',
-      }
-
-      // Удаляем ID и даты создания для создания новой записи
-      delete duplicateData.id
-      delete duplicateData.createdAt
-      delete duplicateData.updatedAt
-
-      const newEstimate = await createEstimate(duplicateData)
+      const newEstimate = await EstimateRepository.duplicate(estimateId)
+      addEstimate(newEstimate)
 
       const toastStore = useToastStore()
       toastStore.showSuccess('Смета скопирована: Копия сметы успешно создана')
@@ -320,17 +318,8 @@ export const useEstimatesStore = defineStore('estimates', () => {
     }
   }
 
-  const clearError = () => {
-    error.value = null
-    validationErrors.value = {}
-  }
-
-  const setCurrentEstimate = (estimate) => {
-    currentEstimate.value = estimate
-  }
-
   const clearCurrentEstimate = () => {
-    currentEstimate.value = null
+    setCurrentEstimate(null)
   }
 
   return {
@@ -339,7 +328,6 @@ export const useEstimatesStore = defineStore('estimates', () => {
     currentEstimate,
     isLoading,
     error,
-    validationErrors,
 
     // Вычисляемые свойства
     estimatesCount,
@@ -347,21 +335,26 @@ export const useEstimatesStore = defineStore('estimates', () => {
     totalRevenue,
     averageEstimateValue,
 
-    // Действия
+    // Действия управления состоянием
+    setEstimates,
+    addEstimate,
+    updateEstimateInStore,
+    removeEstimate,
+    setCurrentEstimate,
+    setLoading,
+    setError,
+    clearError,
+    clearCurrentEstimate,
+
+    // Бизнес-действия (делегируют сервисам)
     loadEstimates,
     createEstimate,
     updateEstimate,
     deleteEstimate,
     loadEstimate,
-    addActivity,
-    updateActivity,
-    deleteActivity,
     updateEstimateStatus,
     duplicateEstimate,
     searchEstimates,
     getEstimateStatistics,
-    clearError,
-    setCurrentEstimate,
-    clearCurrentEstimate,
   }
 })

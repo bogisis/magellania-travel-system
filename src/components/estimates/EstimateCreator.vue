@@ -30,15 +30,31 @@
       <p><strong>Location Country:</strong> {{ estimate.location?.country || 'Пусто' }}</p>
       <p><strong>Group TotalPax:</strong> {{ estimate.group?.totalPax || 0 }}</p>
 
-      <!-- Кнопка для запуска тестов расчетов -->
+      <!-- Кнопки для диагностики расчетов -->
       <div class="mt-4 pt-4 border-t border-yellow-200">
-        <button
-          type="button"
-          @click="runCalculationTestsLocal"
-          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
-        >
-          🧮 Запустить тесты расчетов
-        </button>
+        <div class="flex gap-2 flex-wrap">
+          <button
+            type="button"
+            @click="runCalculationTestsLocal"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+          >
+            🧮 Запустить тесты расчетов
+          </button>
+          <button
+            type="button"
+            @click="runMathDiagnostics"
+            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
+          >
+            🔍 Диагностика математических проблем
+          </button>
+          <button
+            type="button"
+            @click="runComprehensiveTests"
+            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+          >
+            🧪 Комплексное тестирование
+          </button>
+        </div>
       </div>
     </div>
 
@@ -378,6 +394,9 @@
 import { ref, computed, watch, onUnmounted } from 'vue'
 import { Save, Download, Eye, Check, RefreshCw } from 'lucide-vue-next'
 import { runCalculationTests, validateEstimate } from '@/utils/calculationTests.js'
+import { CalculationService } from '@/services/CalculationService.js'
+import { runComprehensiveMathTests } from '@/utils/comprehensiveMathTests.js'
+import { provideEstimateContext } from '@/composables/useEstimateContext.js'
 import LocationSelector from './LocationSelector.vue'
 import TourDateSelector from './TourDateSelector.vue'
 import GroupManager from './GroupManager.vue'
@@ -432,6 +451,9 @@ const estimate = ref({
   createdAt: props.initialData.createdAt || new Date().toISOString(),
   updatedAt: props.initialData.updatedAt || new Date().toISOString(),
 })
+
+// Предоставляем контекст сметы для дочерних компонентов
+const estimateContext = provideEstimateContext(estimate.value)
 
 // Watcher для обновления данных при изменении props
 watch(
@@ -508,51 +530,23 @@ const isFormValid = computed(() => {
   )
 })
 
+// Используем CalculationService для всех расчетов
 const baseCost = computed(() => {
-  const hotelsCost = estimate.value.hotels
-    .filter((hotel) => !hotel.isGuideHotel)
-    .reduce((sum, hotel) => {
-      // Правильный расчет: количество номеров * цена за номер * количество ночей
-      const rooms = calculateRooms(hotel)
-      return sum + rooms * (hotel.pricePerRoom || 0) * (hotel.nights || 1)
-    }, 0)
-
-  const activitiesCost = estimate.value.tourDays.reduce((sum, day) => {
-    return (
-      sum + (day.activities?.reduce((daySum, activity) => daySum + (activity.cost || 0), 0) || 0)
-    )
-  }, 0)
-
-  return hotelsCost + activitiesCost
+  return CalculationService.calculateBaseCost(estimate.value)
 })
 
-// Функция для расчета количества номеров
-const calculateRooms = (hotel) => {
-  if (!hotel.paxCount || !hotel.accommodationType) return 0
-
-  switch (hotel.accommodationType) {
-    case 'double':
-      return Math.ceil(Number(hotel.paxCount) / 2)
-    case 'triple':
-      return Math.ceil(Number(hotel.paxCount) / 3)
-    case 'single':
-    default:
-      return Number(hotel.paxCount)
-  }
-}
-
 const markupAmount = computed(() => {
-  return (baseCost.value * Number(estimate.value.markup || 0)) / 100
+  return CalculationService.calculateMarkupAmount(estimate.value)
 })
 
 const finalCost = computed(() => {
-  return showEstimateWithMarkup.value ? baseCost.value + markupAmount.value : baseCost.value
+  return CalculationService.calculateFinalCost(estimate.value)
 })
 
 const commissionAmount = computed(() => {
   return showEstimateWithMarkup.value
     ? markupAmount.value
-    : (baseCost.value * estimate.value.markup) / 100
+    : CalculationService.calculateMarkupAmount(estimate.value)
 })
 
 const availableCurrencies = computed(() => {
@@ -563,17 +557,13 @@ const hotelsCost = computed(() => {
   return estimate.value.hotels
     .filter((hotel) => !hotel.isGuideHotel)
     .reduce((sum, hotel) => {
-      const rooms = calculateRooms(hotel)
-      return sum + rooms * Number(hotel.pricePerRoom || 0) * Number(hotel.nights || 1)
+      return sum + CalculationService.calculateHotelTotal(hotel)
     }, 0)
 })
 
 const activitiesCost = computed(() => {
   return estimate.value.tourDays.reduce((sum, day) => {
-    return (
-      sum +
-      (day.activities?.reduce((daySum, activity) => daySum + Number(activity.cost || 0), 0) || 0)
-    )
+    return sum + CalculationService.calculateDayTotal(day)
   }, 0)
 })
 
@@ -629,6 +619,128 @@ function runCalculationTestsLocal() {
       : 'Все расчеты корректны!'
 
   alert(message)
+}
+
+// Функция для детальной диагностики математических проблем
+function runMathDiagnostics() {
+  console.log('🔍 Запуск детальной диагностики математических проблем...')
+  console.log('='.repeat(60))
+
+  // 1. Проверка типов данных
+  console.log('\n📊 Проверка типов данных:')
+  estimate.value.hotels.forEach((hotel, index) => {
+    console.log(`Отель ${index + 1}:`)
+    console.log(`  paxCount: ${hotel.paxCount} (тип: ${typeof hotel.paxCount})`)
+    console.log(`  pricePerRoom: ${hotel.pricePerRoom} (тип: ${typeof hotel.pricePerRoom})`)
+    console.log(`  nights: ${hotel.nights} (тип: ${typeof hotel.nights})`)
+    console.log(`  accommodationType: ${hotel.accommodationType}`)
+  })
+
+  // 2. Проверка расчетов
+  console.log('\n🧮 Проверка расчетов:')
+  const localBaseCost = baseCost.value
+  const serviceBaseCost = CalculationService.calculateBaseCost(estimate.value)
+  const localMarkup = markupAmount.value
+  const serviceMarkup = CalculationService.calculateMarkupAmount(estimate.value)
+  const localFinal = finalCost.value
+  const serviceFinal = CalculationService.calculateFinalCost(estimate.value)
+
+  console.log(`Базовая стоимость:`)
+  console.log(`  Локальный расчет: ${localBaseCost}`)
+  console.log(`  Сервисный расчет: ${serviceBaseCost}`)
+  console.log(`  Разница: ${Math.abs(localBaseCost - serviceBaseCost)}`)
+
+  console.log(`Наценка:`)
+  console.log(`  Локальный расчет: ${localMarkup}`)
+  console.log(`  Сервисный расчет: ${serviceMarkup}`)
+  console.log(`  Разница: ${Math.abs(localMarkup - serviceMarkup)}`)
+
+  console.log(`Финальная стоимость:`)
+  console.log(`  Локальный расчет: ${localFinal}`)
+  console.log(`  Сервисный расчет: ${serviceFinal}`)
+  console.log(`  Разница: ${Math.abs(localFinal - serviceFinal)}`)
+
+  // 3. Проверка на проблемы
+  const problems = []
+  const warnings = []
+
+  if (Math.abs(localBaseCost - serviceBaseCost) > 0.01) {
+    problems.push('❌ Несоответствие базовой стоимости между локальными и сервисными методами')
+  }
+
+  if (Math.abs(localMarkup - serviceMarkup) > 0.01) {
+    problems.push('❌ Несоответствие наценки между локальными и сервисными методами')
+  }
+
+  if (Math.abs(localFinal - serviceFinal) > 0.01) {
+    problems.push('❌ Несоответствие финальной стоимости между локальными и сервисными методами')
+  }
+
+  if (localBaseCost > 1000000) {
+    warnings.push('⚠️ Подозрительно высокая базовая стоимость (>$1M)')
+  }
+
+  if (localFinal > 1000000) {
+    warnings.push('⚠️ Подозрительно высокая финальная стоимость (>$1M)')
+  }
+
+  // 4. Проверка данных
+  console.log('\n📋 Проверка данных:')
+  console.log(`Количество отелей: ${estimate.value.hotels.length}`)
+  console.log(`Количество дней тура: ${estimate.value.tourDays.length}`)
+  console.log(`Количество опциональных услуг: ${estimate.value.optionalServices.length}`)
+  console.log(`Наценка: ${estimate.value.markup}%`)
+
+  // 5. Вывод результатов
+  console.log('\n' + '='.repeat(60))
+  console.log('📊 РЕЗУЛЬТАТЫ ДИАГНОСТИКИ:')
+  console.log('='.repeat(60))
+
+  if (problems.length > 0) {
+    console.log('\n🚨 КРИТИЧЕСКИЕ ПРОБЛЕМЫ:')
+    problems.forEach((problem) => console.log(problem))
+  }
+
+  if (warnings.length > 0) {
+    console.log('\n⚠️ ПРЕДУПРЕЖДЕНИЯ:')
+    warnings.forEach((warning) => console.log(warning))
+  }
+
+  if (problems.length === 0 && warnings.length === 0) {
+    console.log('\n✅ Все математические расчеты корректны!')
+  }
+
+  console.log('\n' + '='.repeat(60))
+
+  // Показываем уведомление пользователю
+  const message =
+    problems.length > 0
+      ? `Найдено ${problems.length} критических проблем в расчетах!`
+      : warnings.length > 0
+        ? `Найдено ${warnings.length} предупреждений в расчетах.`
+        : 'Все математические расчеты корректны!'
+
+  alert(message)
+}
+
+// Функция для запуска комплексного тестирования
+function runComprehensiveTests() {
+  console.log('🧪 Запуск комплексного тестирования математических расчетов...')
+
+  try {
+    const results = runComprehensiveMathTests()
+
+    // Показываем уведомление пользователю
+    const message =
+      results.failed === 0
+        ? `🎉 Все ${results.total} тестов пройдены успешно!`
+        : `⚠️ Пройдено ${results.passed} из ${results.total} тестов. ${results.failed} тестов провалено.`
+
+    alert(message)
+  } catch (error) {
+    console.error('Ошибка при запуске комплексных тестов:', error)
+    alert('Ошибка при запуске комплексных тестов: ' + error.message)
+  }
 }
 
 async function updateExchangeRates() {

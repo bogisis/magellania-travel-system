@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/43</span>
+                <span class='fraction'>0/54</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/43</span>
+                <span class='fraction'>0/54</span>
             </div>
         
             
@@ -112,7 +112,23 @@
 <a name='L47'></a><a href='#L47'>47</a>
 <a name='L48'></a><a href='#L48'>48</a>
 <a name='L49'></a><a href='#L49'>49</a>
-<a name='L50'></a><a href='#L50'>50</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -136,6 +152,22 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -153,17 +185,17 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >import { defineStore } from 'pinia'</span></span></span>
 import { ref, computed } from 'vue'
-import { db } from '@/services/database.js'
+import { apiService } from '@/services/apiService.js'
 &nbsp;
 <span class="cstat-no" title="statement not covered" >export const useAnalyticsStore = defineStore('analytics', () =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  const dashboardStats = ref({})</span>
@@ -174,8 +206,8 @@ import { db } from '@/services/database.js'
 <span class="cstat-no" title="statement not covered" >  // Computed свойства</span>
 <span class="cstat-no" title="statement not covered" >  const conversionRate = computed(() =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    if (dashboardStats.value.totalEstimates &gt; 0) {</span>
-<span class="cstat-no" title="statement not covered" >      const approved = dashboardStats.value.totalEstimates - </span>
-<span class="cstat-no" title="statement not covered" >        (dashboardStats.value.activeEstimates || 0)</span>
+<span class="cstat-no" title="statement not covered" >      const approved =</span>
+<span class="cstat-no" title="statement not covered" >        dashboardStats.value.totalEstimates - (dashboardStats.value.activeEstimates || 0)</span>
 <span class="cstat-no" title="statement not covered" >      return Math.round((approved / dashboardStats.value.totalEstimates) * 100)</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
 <span class="cstat-no" title="statement not covered" >    return 0</span>
@@ -185,12 +217,28 @@ import { db } from '@/services/database.js'
 <span class="cstat-no" title="statement not covered" >  async function fetchDashboardStats() {</span>
 <span class="cstat-no" title="statement not covered" >    loading.value = true</span>
 <span class="cstat-no" title="statement not covered" >    error.value = null</span>
-<span class="cstat-no" title="statement not covered" >    </span>
+&nbsp;
 <span class="cstat-no" title="statement not covered" >    try {</span>
-<span class="cstat-no" title="statement not covered" >      dashboardStats.value = await db.getDashboardStats()</span>
+<span class="cstat-no" title="statement not covered" >      // Получаем данные через API</span>
+<span class="cstat-no" title="statement not covered" >      const estimates = await apiService.getEstimates()</span>
+<span class="cstat-no" title="statement not covered" >      const clients = await apiService.getClients()</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >      // Рассчитываем статистику</span>
+<span class="cstat-no" title="statement not covered" >      const totalEstimates = estimates.length</span>
+<span class="cstat-no" title="statement not covered" >      const activeEstimates = estimates.filter((e) =&gt; e.status === 'draft').length</span>
+<span class="cstat-no" title="statement not covered" >      const approvedEstimates = estimates.filter((e) =&gt; e.status === 'confirmed').length</span>
+<span class="cstat-no" title="statement not covered" >      const totalRevenue = estimates.reduce((sum, e) =&gt; sum + (e.totalPrice || 0), 0)</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >      dashboardStats.value = {</span>
+<span class="cstat-no" title="statement not covered" >        totalEstimates,</span>
+<span class="cstat-no" title="statement not covered" >        activeEstimates,</span>
+<span class="cstat-no" title="statement not covered" >        approvedEstimates,</span>
+<span class="cstat-no" title="statement not covered" >        totalRevenue,</span>
+<span class="cstat-no" title="statement not covered" >        totalClients: clients.length,</span>
+<span class="cstat-no" title="statement not covered" >      }</span>
 <span class="cstat-no" title="statement not covered" >    } catch (err) {</span>
 <span class="cstat-no" title="statement not covered" >      error.value = 'Ошибка загрузки статистики'</span>
-<span class="cstat-no" title="statement not covered" >      console.error(err)</span>
+<span class="cstat-no" title="statement not covered" >      console.error('Error: Не удалось получить статистику:', err.message)</span>
 <span class="cstat-no" title="statement not covered" >    } finally {</span>
 <span class="cstat-no" title="statement not covered" >      loading.value = false</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
@@ -202,12 +250,12 @@ import { db } from '@/services/database.js'
 <span class="cstat-no" title="statement not covered" >    salesChartData,</span>
 <span class="cstat-no" title="statement not covered" >    loading,</span>
 <span class="cstat-no" title="statement not covered" >    error,</span>
-<span class="cstat-no" title="statement not covered" >    </span>
+&nbsp;
 <span class="cstat-no" title="statement not covered" >    // Getters</span>
 <span class="cstat-no" title="statement not covered" >    conversionRate,</span>
-<span class="cstat-no" title="statement not covered" >    </span>
+&nbsp;
 <span class="cstat-no" title="statement not covered" >    // Actions</span>
-<span class="cstat-no" title="statement not covered" >    fetchDashboardStats</span>
+<span class="cstat-no" title="statement not covered" >    fetchDashboardStats,</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
 <span class="cstat-no" title="statement not covered" >})</span>
 &nbsp;</pre></td></tr></table></pre>
@@ -217,7 +265,7 @@ import { db } from '@/services/database.js'
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-28T05:23:28.268Z
+                at 2025-08-28T17:43:58.686Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

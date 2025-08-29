@@ -501,19 +501,16 @@ const selectedHotelInfo = (hotelId) => {
   return getHotelById(hotelId)
 }
 
+import { CalculationService } from '@/services/CalculationService.js'
+
+// ... existing code ...
+
 const calculateRooms = (hotel) => {
-  if (hotel.accommodationType === 'double') {
-    return Math.ceil(Number(hotel.paxCount) / 2)
-  } else if (hotel.accommodationType === 'triple') {
-    return Math.ceil(Number(hotel.paxCount) / 3)
-  } else {
-    return Number(hotel.paxCount)
-  }
+  return CalculationService.calculateRooms(hotel)
 }
 
 const calculateHotelTotal = (hotel) => {
-  const rooms = calculateRooms(hotel)
-  return rooms * Number(hotel.pricePerRoom || 0) * Number(hotel.nights || 1)
+  return CalculationService.calculateHotelTotal(hotel)
 }
 
 const formatCurrency = (amount) => {

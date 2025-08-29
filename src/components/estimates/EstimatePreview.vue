@@ -296,22 +296,20 @@ function formatCurrency(amount) {
   }).format(amount || 0)
 }
 
+import { CalculationService } from '@/services/CalculationService.js'
+
+// ... existing code ...
+
 function calculateDayTotal(day) {
-  if (!day.activities) return 0
-  return day.activities.reduce((sum, activity) => sum + Number(activity.cost || 0), 0)
+  return CalculationService.calculateDayTotal(day)
 }
 
 function calculateRooms(hotel) {
-  if (hotel.accommodationType === 'double') {
-    return Math.ceil(Number(hotel.paxCount) / 2)
-  } else {
-    return Number(hotel.paxCount)
-  }
+  return CalculationService.calculateRooms(hotel)
 }
 
 function calculateHotelTotal(hotel) {
-  const rooms = calculateRooms(hotel)
-  return rooms * Number(hotel.pricePerRoom || 0) * Number(hotel.nights || 1)
+  return CalculationService.calculateHotelTotal(hotel)
 }
 </script>
 

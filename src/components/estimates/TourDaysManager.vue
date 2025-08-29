@@ -439,9 +439,12 @@ const updateActivity = (dayId, activityId, field, value) => {
   }
 }
 
+import { CalculationService } from '@/services/CalculationService.js'
+
+// ... existing code ...
+
 const calculateDayTotal = (day) => {
-  if (!day.activities) return 0
-  return day.activities.reduce((sum, activity) => sum + Number(activity.cost || 0), 0)
+  return CalculationService.calculateDayTotal(day)
 }
 
 const onDaysReorder = () => {

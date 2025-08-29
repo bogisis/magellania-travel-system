@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">72.05% </span>
+                <span class="strong">71.12% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>263/365</span>
+                <span class='fraction'>266/374</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">96.92% </span>
+                <span class="strong">97.01% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>63/65</span>
+                <span class='fraction'>65/67</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">72.05% </span>
+                <span class="strong">71.12% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>263/365</span>
+                <span class='fraction'>266/374</span>
             </div>
         
             
@@ -532,7 +532,18 @@
 <a name='L467'></a><a href='#L467'>467</a>
 <a name='L468'></a><a href='#L468'>468</a>
 <a name='L469'></a><a href='#L469'>469</a>
-<a name='L470'></a><a href='#L470'>470</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<a name='L470'></a><a href='#L470'>470</a>
+<a name='L471'></a><a href='#L471'>471</a>
+<a name='L472'></a><a href='#L472'>472</a>
+<a name='L473'></a><a href='#L473'>473</a>
+<a name='L474'></a><a href='#L474'>474</a>
+<a name='L475'></a><a href='#L475'>475</a>
+<a name='L476'></a><a href='#L476'>476</a>
+<a name='L477'></a><a href='#L477'>477</a>
+<a name='L478'></a><a href='#L478'>478</a>
+<a name='L479'></a><a href='#L479'>479</a>
+<a name='L480'></a><a href='#L480'>480</a>
+<a name='L481'></a><a href='#L481'>481</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -782,6 +793,10 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">38x</span>
+<span class="cline-any cline-yes">38x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">38x</span>
@@ -872,6 +887,13 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1252,6 +1274,10 @@ const group = ref({ ...props.modelValue })
 &nbsp;
 // Вычисляемые свойства
 &nbsp;
+const totalPax = computed(() =&gt; {
+  return Number(group.value.totalPax) || 0
+})
+&nbsp;
 const maxDoubleCount = computed(() =&gt; {
   const totalPax = Number(group.value.totalPax) || 0
   return Math.floor(totalPax / 2)
@@ -1340,8 +1366,15 @@ const onTotalPaxChange = <span class="fstat-no" title="function not covered" >()
 <span class="cstat-no" title="statement not covered" >  const totalPax = Number(group.value.totalPax) || 0</span>
 <span class="cstat-no" title="statement not covered" >  group.value.totalPax = totalPax</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  // Автоматически корректируем размещение при изменении количества туристов</span>
-<span class="cstat-no" title="statement not covered" >  if (totalPax &gt; 0) {</span>
+<span class="cstat-no" title="statement not covered" >  // Автоматически корректируем размещение только если все поля размещения пустые</span>
+<span class="cstat-no" title="statement not covered" >  const hasManualAccommodation =</span>
+<span class="cstat-no" title="statement not covered" >    (group.value.doubleCount || 0) +</span>
+<span class="cstat-no" title="statement not covered" >      (group.value.singleCount || 0) +</span>
+<span class="cstat-no" title="statement not covered" >      (group.value.tripleCount || 0) +</span>
+<span class="cstat-no" title="statement not covered" >      (group.value.extraCount || 0) &gt;</span>
+<span class="cstat-no" title="statement not covered" >    0</span>
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  if (totalPax &gt; 0 &amp;&amp; !hasManualAccommodation) {</span>
 <span class="cstat-no" title="statement not covered" >    const optimalDouble = Math.floor(totalPax / 2)</span>
 <span class="cstat-no" title="statement not covered" >    const remaining = totalPax % 2</span>
 &nbsp;
@@ -1349,7 +1382,7 @@ const onTotalPaxChange = <span class="fstat-no" title="function not covered" >()
 <span class="cstat-no" title="statement not covered" >    group.value.singleCount = remaining</span>
 <span class="cstat-no" title="statement not covered" >    group.value.tripleCount = 0</span>
 <span class="cstat-no" title="statement not covered" >    group.value.extraCount = 0</span>
-<span class="cstat-no" title="statement not covered" >  } else {</span>
+<span class="cstat-no" title="statement not covered" >  } else if (totalPax === 0) {</span>
 <span class="cstat-no" title="statement not covered" >    // Если количество туристов 0, сбрасываем размещение</span>
 <span class="cstat-no" title="statement not covered" >    group.value.doubleCount = 0</span>
 <span class="cstat-no" title="statement not covered" >    group.value.singleCount = 0</span>
@@ -1477,7 +1510,7 @@ updateModelValue()
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-28T05:23:28.268Z
+                at 2025-08-28T17:43:58.686Z
             </div>
         <script src="../../../../prettify.js"></script>
         <script>

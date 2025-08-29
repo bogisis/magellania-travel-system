@@ -8,6 +8,37 @@ require('dotenv').config()
 const app = express()
 const PORT = process.env.PORT || 3001
 
+// Функция для преобразования timestamp в дату
+const formatDate = (dateValue) => {
+  if (!dateValue) return ''
+
+  // Если это уже правильный формат даты (yyyy-MM-dd)
+  if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+    return dateValue
+  }
+
+  // Если это ISO формат с временем
+  if (typeof dateValue === 'string' && dateValue.includes('T')) {
+    return dateValue.split('T')[0]
+  }
+
+  // Если это timestamp как строка
+  if (typeof dateValue === 'string' && !isNaN(parseFloat(dateValue))) {
+    const timestamp = parseFloat(dateValue)
+    if (timestamp > 1000000000000) {
+      // Проверяем, что это не Unix timestamp
+      return new Date(timestamp).toISOString().split('T')[0]
+    }
+  }
+
+  // Если это timestamp как число
+  if (typeof dateValue === 'number' && dateValue > 1000000000000) {
+    return new Date(dateValue).toISOString().split('T')[0]
+  }
+
+  return dateValue
+}
+
 // Middleware
 app.use(
   cors({
@@ -101,31 +132,44 @@ const createTables = () => {
   })
 }
 
-// Добавление демо-данных
+// Добавление демо-данных (только клиенты и поставщики)
 const seedData = () => {
   return new Promise((resolve, reject) => {
-    const demoData = `
-      INSERT OR IGNORE INTO clients (name, email, phone, company, country, segment) VALUES
-      ('Иван Петров', 'ivan@example.com', '+7-999-123-45-67', 'ООО "Туризм"', 'Россия', 'premium'),
-      ('Мария Сидорова', 'maria@example.com', '+7-999-234-56-78', 'ИП Сидорова', 'Россия', 'regular');
-
-      INSERT OR IGNORE INTO suppliers (category, name, email, phone, country, rating) VALUES
-      ('hotel', 'Hotel Austral Plaza', 'reservas@australplaza.com', '+54-11-4123-4567', 'Argentina', 4.5),
-      ('transport', 'Patagonia Transfers', 'info@patagoniatransfers.com', '+54-11-5555-0001', 'Argentina', 4.8);
-
-      INSERT OR IGNORE INTO estimates (name, tourName, country, region, startDate, duration, status, clientId, totalPrice) VALUES
-      ('Тур в Аргентину - Иван Петров', 'Аргентинское приключение', 'Argentina', 'Buenos Aires', '2024-03-15', 7, 'confirmed', 1, 850),
-      ('Экскурсия по Буэнос-Айресу - Мария', 'Городские туры', 'Argentina', 'Buenos Aires', '2024-02-20', 3, 'draft', 2, 320);
-    `
-
-    db.exec(demoData, (err) => {
+    // Проверяем, есть ли уже данные
+    db.get('SELECT COUNT(*) as count FROM estimates', (err, result) => {
       if (err) {
-        console.error('❌ Ошибка добавления демо-данных:', err.message)
+        console.error('❌ Ошибка проверки данных:', err.message)
         reject(err)
-      } else {
-        console.log('✅ Демо-данные добавлены')
-        resolve()
+        return
       }
+
+      // Если есть данные, не добавляем демо-данные
+      if (result.count > 0) {
+        console.log('✅ База данных уже содержит данные')
+        resolve()
+        return
+      }
+
+      // Добавляем только базовые клиентов и поставщиков
+      const demoData = `
+        INSERT INTO clients (name, email, phone, company, country, segment) VALUES
+        ('Иван Петров', 'ivan@example.com', '+7-999-123-45-67', 'ООО "Туризм"', 'Россия', 'premium'),
+        ('Мария Сидорова', 'maria@example.com', '+7-999-234-56-78', 'ИП Сидорова', 'Россия', 'regular');
+
+        INSERT INTO suppliers (category, name, email, phone, country, rating) VALUES
+        ('hotel', 'Hotel Austral Plaza', 'reservas@australplaza.com', '+54-11-4123-4567', 'Argentina', 4.5),
+        ('transport', 'Patagonia Transfers', 'info@patagoniatransfers.com', '+54-11-5555-0001', 'Argentina', 4.8);
+      `
+
+      db.exec(demoData, (err) => {
+        if (err) {
+          console.error('❌ Ошибка добавления демо-данных:', err.message)
+          reject(err)
+        } else {
+          console.log('✅ Базовые демо-данные добавлены')
+          resolve()
+        }
+      })
     })
   })
 }
@@ -284,8 +328,27 @@ app.get('/api/estimates/:id', async (req, res) => {
     }
 
     // Преобразуем JSON данные обратно в объекты
+    const tourDatesData = estimate.tour_dates_data
+      ? JSON.parse(estimate.tour_dates_data)
+      : {
+          dateType: 'exact',
+          startDate: '',
+          endDate: '',
+          days: 0,
+        }
+
+    // Преобразуем даты в tourDates в правильный формат
+    if (tourDatesData.startDate) {
+      tourDatesData.startDate = formatDate(tourDatesData.startDate)
+    }
+    if (tourDatesData.endDate) {
+      tourDatesData.endDate = formatDate(tourDatesData.endDate)
+    }
+
     const fullEstimate = {
       ...estimate,
+      // Преобразуем startDate из timestamp в дату
+      startDate: formatDate(estimate.startDate),
       location: estimate.location_data
         ? JSON.parse(estimate.location_data)
         : {
@@ -295,14 +358,7 @@ app.get('/api/estimates/:id', async (req, res) => {
             startPoint: '',
             endPoint: '',
           },
-      tourDates: estimate.tour_dates_data
-        ? JSON.parse(estimate.tour_dates_data)
-        : {
-            dateType: 'exact',
-            startDate: '',
-            endDate: '',
-            days: 0,
-          },
+      tourDates: tourDatesData,
       group: estimate.group_data
         ? JSON.parse(estimate.group_data)
         : {

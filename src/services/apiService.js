@@ -3,6 +3,8 @@
  * Заменяет IndexedDB на внешнюю базу данных
  */
 
+import { authService } from './authService.js'
+
 const API_BASE_URL = 'http://localhost:3001/api'
 
 class ApiService {
@@ -14,11 +16,15 @@ class ApiService {
    * Базовый метод для HTTP запросов
    */
   async request(endpoint, options = {}) {
+    // Проверяем аутентификацию
+    await authService.refreshTokenIfNeeded()
+
     const url = `${this.baseURL}${endpoint}`
 
     const config = {
       headers: {
         'Content-Type': 'application/json',
+        ...authService.getAuthHeaders(),
         ...options.headers,
       },
       ...options,
@@ -206,89 +212,17 @@ class ApiService {
   }
 
   /**
-   * Мигрировать данные из IndexedDB в SQLite
+   * Мигрировать данные из IndexedDB в SQLite (отключено)
    */
   async migrateFromIndexedDB() {
-    try {
-      console.log('🚀 Начало миграции данных из IndexedDB...')
-
-      // Импортируем старую базу данных
-      const { db: oldDb } = await import('./database.js')
-
-      // Мигрируем клиентов
-      const clients = await oldDb.clients.toArray()
-      console.log(`📊 Найдено ${clients.length} клиентов для миграции`)
-
-      for (const client of clients) {
-        try {
-          await this.createClient({
-            name: client.name,
-            email: client.email,
-            phone: client.phone,
-            company: client.company,
-            country: client.country,
-            segment: client.segment || 'new',
-            totalSpent: client.totalSpent || 0,
-          })
-        } catch (error) {
-          console.warn(`⚠️ Ошибка миграции клиента ${client.name}:`, error.message)
-        }
-      }
-
-      // Мигрируем поставщиков
-      const suppliers = await oldDb.suppliers.toArray()
-      console.log(`📊 Найдено ${suppliers.length} поставщиков для миграции`)
-
-      for (const supplier of suppliers) {
-        try {
-          await this.createSupplier({
-            category: supplier.category,
-            name: supplier.name,
-            email: supplier.email,
-            phone: supplier.phone,
-            country: supplier.country,
-            rating: supplier.rating || 0,
-            active: supplier.active !== false,
-          })
-        } catch (error) {
-          console.warn(`⚠️ Ошибка миграции поставщика ${supplier.name}:`, error.message)
-        }
-      }
-
-      // Мигрируем сметы
-      const estimates = await oldDb.estimates.toArray()
-      console.log(`📊 Найдено ${estimates.length} смет для миграции`)
-
-      for (const estimate of estimates) {
-        try {
-          await this.createEstimate({
-            name: estimate.name,
-            tourName: estimate.tourName,
-            country: estimate.country,
-            region: estimate.region,
-            startDate: estimate.startDate,
-            duration: estimate.duration,
-            status: estimate.status || 'draft',
-            clientId: estimate.clientId,
-            totalPrice: estimate.totalPrice || 0,
-          })
-        } catch (error) {
-          console.warn(`⚠️ Ошибка миграции сметы ${estimate.name}:`, error.message)
-        }
-      }
-
-      console.log('✅ Миграция данных завершена успешно!')
-      return {
-        success: true,
-        migrated: {
-          clients: clients.length,
-          suppliers: suppliers.length,
-          estimates: estimates.length,
-        },
-      }
-    } catch (error) {
-      console.error('❌ Ошибка миграции:', error)
-      throw error
+    console.log('🚫 Миграция из IndexedDB отключена - используем только SQLite')
+    return {
+      success: true,
+      migrated: {
+        clients: 0,
+        suppliers: 0,
+        estimates: 0,
+      },
     }
   }
 }

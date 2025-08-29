@@ -32,8 +32,29 @@
 
     <!-- Main content -->
     <main class="ml-64">
-      <header class="bg-white shadow-sm border-b h-16 flex items-center px-8">
+      <header class="bg-white shadow-sm border-b h-16 flex items-center justify-between px-8">
         <h2 class="text-xl font-semibold text-gray-800">{{ currentPageTitle }}</h2>
+
+        <!-- User menu -->
+        <div class="flex items-center gap-4">
+          <div class="text-sm text-gray-600">
+            {{ user?.name || 'Пользователь' }}
+          </div>
+          <button
+            @click="handleLogout"
+            class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-2"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+              />
+            </svg>
+            Выйти
+          </button>
+        </div>
       </header>
 
       <div class="p-8">
@@ -45,9 +66,21 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { authService } from '@/services/authService.js'
+import { useToastStore } from '@/stores/toastStore.js'
 
 const route = useRoute()
+const router = useRouter()
+const toastStore = useToastStore()
+
+const user = computed(() => authService.getUser())
+
+const handleLogout = () => {
+  authService.logout()
+  toastStore.showSuccess('Вы успешно вышли из системы')
+  router.push('/login')
+}
 
 const navigation = [
   { name: 'Панель управления', path: '/', icon: 'HomeIcon' },
